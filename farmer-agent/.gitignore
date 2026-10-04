@@ -1,0 +1,34 @@
+# ── Secrets & keys ────────────────────────────────────────────────────────
+.env
+
+# ── Generated databases (run scripts/init_db.py locally) ──────────────────
+data/farmers.db
+
+# ── Generated vector store (run scripts/ingest_docs.py locally) ───────────
+data/chroma_db/
+
+# ── Python cache ──────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── Test & coverage cache ─────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Virtual environments ──────────────────────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── VS Code ───────────────────────────────────────────────────────────────
+.vscode/
+
+# ── OS files ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Temp test file ────────────────────────────────────────────────────────
+test_api.py
