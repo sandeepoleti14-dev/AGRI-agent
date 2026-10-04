@@ -1,0 +1,807 @@
+[
+  {
+    "test_id": 1,
+    "category": "healthy paddy leaf",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\healthy_paddy.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Healthy",
+      "confidence": 0.93,
+      "observations": [
+        "Uniform vibrant green foliage with healthy chloroplast pigmentation",
+        "No visible necrotic lesions, fungal spore balls, or chlorotic streaks",
+        "Leaf blades exhibit intact structural integrity"
+      ]
+    },
+    "retrieved_evidence_count": 0,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Healthy",
+      "confidence": 0.93,
+      "observations": [
+        "Uniform vibrant green foliage with healthy chloroplast pigmentation",
+        "No visible necrotic lesions, fungal spore balls, or chlorotic streaks",
+        "Leaf blades exhibit intact structural integrity"
+      ],
+      "symptoms": [],
+      "organic_management": [
+        "Maintain balanced NPK fertilization as per soil testing",
+        "Adopt alternate wetting and drying (AWD) water management",
+        "Conduct weekly field scouting during vegetative and tillering stages"
+      ],
+      "chemical_management": [
+        "No chemical application required for healthy crop"
+      ],
+      "evidence": [
+        "ICAR/IRRI crop standards: No foliar lesions or pathogen symptoms detected."
+      ],
+      "sources": [
+        "ICAR Crop Production Guide"
+      ],
+      "warning": "Crop foliage appears healthy. Continue routine monitoring and avoid excessive nitrogen application.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify as Healthy, confidence >= 0.80, no chemical spray recommended.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 2,
+    "category": "rice blast",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\rice_blast.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Rice Blast",
+      "confidence": 0.88,
+      "observations": [
+        "Spindle-shaped / diamond-shaped lesions observed on leaf blade",
+        "Lesions exhibit whitish-gray centers with dark reddish-brown margins",
+        "Early signs of leaf tissue necrosis coalescing along leaf axis"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Rice Blast",
+      "confidence": 0.88,
+      "observations": [
+        "Spindle-shaped / diamond-shaped lesions observed on leaf blade",
+        "Lesions exhibit whitish-gray centers with dark reddish-brown margins",
+        "Early signs of leaf tissue necrosis coalescing along leaf axis"
+      ],
+      "symptoms": [
+        "Rice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped",
+        "spots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions",
+        "enlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf",
+        "junction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy"
+      ],
+      "organic_management": [
+        "Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.",
+        "Maintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne",
+        "Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with",
+        "NPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and"
+      ],
+      "chemical_management": [
+        "Seed treatment with Tricyclazole 75% WP @ 2.0 g/kg seed. In the main field, foliar spray of Tricyclazole 75% WP @",
+        "0.6 g/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L or Isoprothiolane 40% EC @ 1.5 mL/L at the",
+        "first appearance of leaf blast lesions, repeating at booting/heading if neck blast weather persists.",
+        "Active Ingredient: Tricyclazole 75% WP | Reference Formulation: Beam (registered standard formulation) |"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nRice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped\nspots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions\nenlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf\njunction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy\ngrains and lodging.",
+        "Official Agricultural Extension Advisory: Rice Blast in Rice (Paddy)\nCausal Pathogen: Magnaporthe oryzae (anamorph Pyricularia oryzae)\nIssuing Source: ICAR - National Rice Research Institute (NRRI) Disease Compendium | Date: 2024-03-15",
+        "3. Cultural Management and Field Prevention\nPrevention: Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.\nMaintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne\ninoculum.\nCultural Practices: Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with\nNPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and\nremove susceptible grass weed hosts from bunds."
+      ],
+      "sources": [
+        "rice_blast_icar_bulletin.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify Rice Blast, spindle lesions observed, Tricyclazole chemical evidence retrieved.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 3,
+    "category": "sheath blight",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\sheath_blight.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Sheath Blight",
+      "confidence": 0.89,
+      "observations": [
+        "Oval to oblong water-soaked greenish-gray lesions detected on lower leaf sheath",
+        "Irregular dark brown borders with banded snake-skin-like pattern",
+        "Lesions localized near the water/soil line"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Sheath Blight",
+      "confidence": 0.89,
+      "observations": [
+        "Oval to oblong water-soaked greenish-gray lesions detected on lower leaf sheath",
+        "Irregular dark brown borders with banded snake-skin-like pattern",
+        "Lesions localized near the water/soil line"
+      ],
+      "symptoms": [
+        "Initial symptoms develop on leaf sheaths near the water level as oval or oblong, water-soaked, greenish-gray spots",
+        "(1-3 cm long). As lesions mature, the centers become bleached, grayish-white, with an irregular dark brown or purple",
+        "border. Under favorable microclimates, lesions coalesce, spread upward to upper leaf sheaths and blades, forming",
+        "snake-skin-like banded patterns, leading to sheath rot, panicle blighting, and severe plant lodging."
+      ],
+      "organic_management": [
+        "Seed treatment with Trichoderma viride or Pseudomonas fluorescens @ 10 g/kg seed. Soil application of",
+        "Trichoderma enriched farmyard manure (FYM) @ 2.5 kg/ha mixed with 100 kg FYM at the time of final land",
+        "preparation. Foliar spray of Pseudomonas fluorescens @ 0.5% (5 g/L) at tillering and boot leaf stages.",
+        "Opt for wider spacing during transplanting (20 x 15 cm or 20 x 20 cm) to facilitate canopy aeration. Skim"
+      ],
+      "chemical_management": [
+        "Foliar spray targeted at the base of the plant: Hexaconazole 5% EC @ 2.0 mL/L or Validamycin 3% L @ 2.0 mL/L or",
+        "Thifluzamide 24% SC @ 0.75 mL/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L at the first",
+        "appearance of symptoms. Direct spray toward lower sheaths near the water line.",
+        "Active Ingredient: Hexaconazole 5% EC | Reference Formulation: Contaf (standard reference formulation) |"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nInitial symptoms develop on leaf sheaths near the water level as oval or oblong, water-soaked, greenish-gray spots\n(1-3 cm long). As lesions mature, the centers become bleached, grayish-white, with an irregular dark brown or purple\nborder. Under favorable microclimates, lesions coalesce, spread upward to upper leaf sheaths and blades, forming\nsnake-skin-like banded patterns, leading to sheath rot, panicle blighting, and severe plant lodging.",
+        "Official Agricultural Extension Advisory: Sheath Blight in Rice\n(Paddy)\nCausal Pathogen: Rhizoctonia solani (teleomorph Thanatephorus cucumeris)\nIssuing Source: ICAR-Indian Institute of Rice Research (IIRR) Advisory | Date: 2024-02-28",
+        "5. Verified Chemical Interventions\nFoliar spray targeted at the base of the plant: Hexaconazole 5% EC @ 2.0 mL/L or Validamycin 3% L @ 2.0 mL/L or\nThifluzamide 24% SC @ 0.75 mL/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L at the first\nappearance of symptoms. Direct spray toward lower sheaths near the water line.\n• Active Ingredient: Hexaconazole 5% EC | Reference Formulation: Contaf (standard reference formulation) |\nRegistrant: Rallis India Ltd | Source: DPPQS Approved Pesticide List (2024-02-12)\n• Active Ingredient: Validamycin 3% L | Reference Formulation: Sheathmar (standard antibiotic fungicide) |\nRegistrant: Dhanuka Agritech Ltd | Source: ICAR-IIRR Rice Pathology Bulletins (2024-01-25)\n• Active Ingredient: Thifluzamide 24% SC | Reference Formulation: Pulsor (registered formulation) | Registrant:\nDow / Gowan / Nissan Chemical | Source: CIBRC National Pesticide Gazette (2024-03-05)\nNotice: Chemical recommendations are derived strictly from central agricultural research advisories. Farmers must consult local district agricultural\nextension officers for local dosage and label claims."
+      ],
+      "sources": [
+        "sheath_blight_management_manual.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify Sheath Blight, lower sheath lesions, Hexaconazole/Validamycin evidence retrieved.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 4,
+    "category": "bacterial leaf blight",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\bacterial_leaf_blight.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Bacterial Leaf Blight",
+      "confidence": 0.9,
+      "observations": [
+        "Water-soaked marginal lesions enlarging along leaf edges with wavy borders",
+        "Straw-yellow to bleached white foliar desiccation starting from leaf tips",
+        "Characteristic marginal leaf blight symptom without spindle shape"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Bacterial Leaf Blight",
+      "confidence": 0.9,
+      "observations": [
+        "Water-soaked marginal lesions enlarging along leaf edges with wavy borders",
+        "Straw-yellow to bleached white foliar desiccation starting from leaf tips",
+        "Characteristic marginal leaf blight symptom without spindle shape"
+      ],
+      "symptoms": [
+        "Water-soaked lesions begin at leaf margins and tips, rapidly enlarging along the leaf edges with characteristic wavy or",
+        "undulating borders. Lesions turn straw-yellow to bleached white as the tissue dies. In early morning under moist",
+        "conditions, milky bacterial ooze droplets form on young lesions, drying into small yellowish beads. In systemic 'kresek'",
+        "phase (seedling stage), leaves wilt, roll up, and die rapidly."
+      ],
+      "organic_management": [
+        "Use certified disease-free seed and resistant/tolerant cultivars (e.g., IR64, Improved Samba Mahsuri).",
+        "Avoid clipping seedling leaf tips during transplanting. Avoid deep submergence of rice hills.",
+        "Adopt intermittent irrigation and field drainage to expose the soil to air. Withhold top dressing of",
+        "nitrogen fertilizers immediately upon first symptom detection. Increase potassium application (Muriate of Potash) by"
+      ],
+      "chemical_management": [
+        "Seed soaking in Streptocycline (90% Streptomycin sulphate + 10% Tetracycline hydrochloride) @ 0.1 g/L with Copper",
+        "Oxychloride @ 1.0 g/L for 8-10 hours. Foliar spray of Copper Hydroxide 77% WP @ 2.0 g/L or Streptocycline @ 0.1",
+        "g/L + Copper Oxychloride 50% WP @ 2.5 g/L during active tiller stage. Avoid spraying during hot sunny hours.",
+        "Active Ingredient: Copper Hydroxide 77% WP | Reference Formulation: Kocide 2000 (standard registered"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nWater-soaked lesions begin at leaf margins and tips, rapidly enlarging along the leaf edges with characteristic wavy or\nundulating borders. Lesions turn straw-yellow to bleached white as the tissue dies. In early morning under moist\nconditions, milky bacterial ooze droplets form on young lesions, drying into small yellowish beads. In systemic 'kresek'\nphase (seedling stage), leaves wilt, roll up, and die rapidly.",
+        "Official Agricultural Extension Advisory: Bacterial Leaf Blight in\nRice (Paddy)\nCausal Pathogen: Xanthomonas oryzae pv. oryzae\nIssuing Source: TNAU Agritech Portal & IRRI Rice Knowledge Bank | Date: 2024-04-10",
+        "2. Environmental Epidemiology & Causes\nBacterium enters leaves through natural openings (hydathodes) or mechanical injuries caused by high winds or\nstorms. Promoted by high ambient temperatures (25-34 deg C), high humidity (>85%), wind-driven heavy rains, deep\nstanding water in fields, and heavy nitrogen fertilization."
+      ],
+      "sources": [
+        "bacterial_leaf_blight_guidelines.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify BLB, marginal wavy lesions, Streptocycline/Copper evidence retrieved.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 5,
+    "category": "brown spot",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\brown_spot.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Brown Spot",
+      "confidence": 0.86,
+      "observations": [
+        "Numerous small, circular to oval sesame-seed-like dark brown spots",
+        "Prominent light brown centers surrounded by chlorotic yellow halos",
+        "Symptoms distributed across vegetative leaf blades"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Brown Spot",
+      "confidence": 0.86,
+      "observations": [
+        "Numerous small, circular to oval sesame-seed-like dark brown spots",
+        "Prominent light brown centers surrounded by chlorotic yellow halos",
+        "Symptoms distributed across vegetative leaf blades"
+      ],
+      "symptoms": [
+        "Affects seedlings, leaves, leaf sheaths, and glumes. On leaves, spots are circular to oval, resembling sesame seeds",
+        "(sesame spot). Small spots are dark brown or purplish-brown; fully developed spots are circular to oval with a light",
+        "brown or gray center and a distinct dark reddish-brown border, frequently surrounded by a yellow halo. Heavily",
+        "infected leaves turn yellow and wither prematurely. Infected grains develop dark brown or black discoloration, causing"
+      ],
+      "organic_management": [
+        "Hot water seed treatment at 52-54 deg C for 10-15 minutes to eliminate internal seed-borne mycelium. Seed",
+        "treatment with Pseudomonas fluorescens @ 10 g/kg seed. Foliar spray of fresh neem seed kernel extract (NSKE 5%)",
+        "or garlic bulb extract @ 2% at disease onset.",
+        "Ensure balanced plant nutrition by soil testing; correct nutrient deficiencies especially potassium, zinc,"
+      ],
+      "chemical_management": [
+        "Seed treatment with Carbendazim 12% + Mancozeb 63% WP @ 2.0 g/kg seed. Foliar spray of Mancozeb 75% WP @",
+        "2.0 g/L or Propiconazole 25% EC @ 1.0 mL/L or Tebuconazole 25.9% EC @ 1.5 mL/L at the boot leaf stage.",
+        "Active Ingredient: Propiconazole 25% EC | Reference Formulation: Tilt (standard reference) | Registrant:",
+        "Syngenta India Ltd | Source: CIBRC Registered Fungicide Gazette (2024-01-18)"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nAffects seedlings, leaves, leaf sheaths, and glumes. On leaves, spots are circular to oval, resembling sesame seeds\n(sesame spot). Small spots are dark brown or purplish-brown; fully developed spots are circular to oval with a light\nbrown or gray center and a distinct dark reddish-brown border, frequently surrounded by a yellow halo. Heavily\ninfected leaves turn yellow and wither prematurely. Infected grains develop dark brown or black discoloration, causing\npoor germination and grain spotting (pecky rice).",
+        "Official Agricultural Extension Advisory: Brown Spot in Rice\n(Paddy)\nCausal Pathogen: Bipolaris oryzae (teleomorph Cochliobolus miyabeanus)\nIssuing Source: ICAR-NRRI & IRRI Rice Health Management Guide | Date: 2024-03-22",
+        "3. Associated with nutrient-deficient soils, especially\npotassium, silicon, manganese, and iron deficiency. Prevalent in upland, drought-stressed, sandy, or poorly drained\nsoils with temperatures of 25-30 deg C and high humidity (>80%)."
+      ],
+      "sources": [
+        "brown_spot_pathology_advisory.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify Brown Spot, sesame-seed-like spots, Propiconazole/Mancozeb evidence retrieved.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 6,
+    "category": "false smut",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\false_smut.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "False Smut",
+      "confidence": 0.91,
+      "observations": [
+        "Panicle spikelets transformed into prominent velvety spore balls",
+        "Characteristic yellowish-orange and olive-green pulverulent masses",
+        "Infection localized to floral and grain tissues"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "False Smut",
+      "confidence": 0.91,
+      "observations": [
+        "Panicle spikelets transformed into prominent velvety spore balls",
+        "Characteristic yellowish-orange and olive-green pulverulent masses",
+        "Infection localized to floral and grain tissues"
+      ],
+      "symptoms": [
+        "Symptoms become visible only after flowering and grain development. Individual spikelets on the panicle are",
+        "transformed into large, velvety green or orange-yellow spore balls, usually more than twice the diameter of normal",
+        "grains. Initially, the spore balls are small, yellow, and covered with a smooth membrane. Later, the membrane bursts,",
+        "turning the ball dark olive-green or greenish-black, releasing powdery chlamydospores that contaminate neighboring"
+      ],
+      "organic_management": [
+        "Use certified clean seeds free from smut balls. Avoid excessive nitrogen top dressing after panicle",
+        "initiation. Adjust transplanting dates to avoid flowering during continuous cloudy/rainy spells.",
+        "Manually collect and safely burn false smut balls wrapped in polythene bags to prevent spore",
+        "dissemination. Deep summer plowing to bury resting sclerotia below the topsoil."
+      ],
+      "chemical_management": [
+        "Preventive spray at boot leaf stage (before panicle emergence): Copper Hydroxide 77% WP @ 2.0 g/L or",
+        "Propiconazole 25% EC @ 1.0 mL/L or Trifloxystrobin 25% + Tebuconazole 50% WG @ 0.4 g/L. Spraying after smut",
+        "balls appear is ineffective.",
+        "Active Ingredient: Trifloxystrobin 25% + Tebuconazole 50% WG | Reference Formulation: Nativo (standard"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nSymptoms become visible only after flowering and grain development. Individual spikelets on the panicle are\ntransformed into large, velvety green or orange-yellow spore balls, usually more than twice the diameter of normal\ngrains. Initially, the spore balls are small, yellow, and covered with a smooth membrane. Later, the membrane bursts,\nturning the ball dark olive-green or greenish-black, releasing powdery chlamydospores that contaminate neighboring\ngrains.",
+        "Official Agricultural Extension Advisory: False Smut in Rice (Paddy)\nCausal Pathogen: Ustilaginoidea virens (teleomorph Villosiclava virens)\nIssuing Source: Directorate of Plant Protection, Quarantine & Storage (DPPQS) & ICAR-IIRR | Date: 2024-04-05",
+        "3. Cultural Management and Field Prevention\nPrevention: Use certified clean seeds free from smut balls. Avoid excessive nitrogen top dressing after panicle\ninitiation. Adjust transplanting dates to avoid flowering during continuous cloudy/rainy spells.\nCultural Practices: Manually collect and safely burn false smut balls wrapped in polythene bags to prevent spore\ndissemination. Deep summer plowing to bury resting sclerotia below the topsoil."
+      ],
+      "sources": [
+        "false_smut_advisory_bulletin.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify False Smut, velvety spore balls, Copper Hydroxide/Trifloxystrobin evidence retrieved.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 7,
+    "category": "unclear image",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\unclear_blur.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "uncertain",
+      "confidence": 0.0,
+      "observations": [
+        "Image lacks sufficient edge sharpness and focus for diagnostic evaluation"
+      ]
+    },
+    "retrieved_evidence_count": 0,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Uncertain",
+      "confidence": 0.0,
+      "observations": [
+        "Image lacks sufficient edge sharpness and focus for diagnostic evaluation"
+      ],
+      "symptoms": [],
+      "organic_management": [],
+      "chemical_management": [],
+      "evidence": [],
+      "sources": [],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected plant leaf or panicle.",
+      "language": "English"
+    },
+    "expected_behavior": "Flag blurriness, return possible_disease='uncertain', confidence=0.0.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 8,
+    "category": "unrelated image",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\unrelated_car.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "non-crop",
+      "possible_disease": "uncertain",
+      "confidence": 0.0,
+      "observations": [
+        "Visual patterns and color spectrum indicate a non-crop object (e.g. vehicle or artificial structure)"
+      ]
+    },
+    "retrieved_evidence_count": 0,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Uncertain",
+      "confidence": 0.0,
+      "observations": [
+        "Visual patterns and color spectrum indicate a non-crop object (e.g. vehicle or artificial structure)"
+      ],
+      "symptoms": [],
+      "organic_management": [],
+      "chemical_management": [],
+      "evidence": [],
+      "sources": [],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected plant leaf or panicle.",
+      "language": "English"
+    },
+    "expected_behavior": "Identify non-crop object, confidence=0.0, advise uploading crop leaf.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 9,
+    "category": "low-quality image",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\low_quality_dark.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "uncertain",
+      "confidence": 0.0,
+      "observations": [
+        "Image is too dark to discern plant foliage or disease lesions"
+      ]
+    },
+    "retrieved_evidence_count": 0,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Uncertain",
+      "confidence": 0.0,
+      "observations": [
+        "Image is too dark to discern plant foliage or disease lesions"
+      ],
+      "symptoms": [],
+      "organic_management": [],
+      "chemical_management": [],
+      "evidence": [],
+      "sources": [],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected plant leaf or panicle.",
+      "language": "English"
+    },
+    "expected_behavior": "Flag severe underexposure/darkness, confidence=0.0, uncertainty warning.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 10,
+    "category": "missing crop name",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\sheath_blight.jpg",
+      "crop": "",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Sheath Blight",
+      "confidence": 0.89,
+      "observations": [
+        "Oval to oblong water-soaked greenish-gray lesions detected on lower leaf sheath",
+        "Irregular dark brown borders with banded snake-skin-like pattern",
+        "Lesions localized near the water/soil line"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Sheath Blight",
+      "confidence": 0.89,
+      "observations": [
+        "Oval to oblong water-soaked greenish-gray lesions detected on lower leaf sheath",
+        "Irregular dark brown borders with banded snake-skin-like pattern",
+        "Lesions localized near the water/soil line"
+      ],
+      "symptoms": [
+        "Initial symptoms develop on leaf sheaths near the water level as oval or oblong, water-soaked, greenish-gray spots",
+        "(1-3 cm long). As lesions mature, the centers become bleached, grayish-white, with an irregular dark brown or purple",
+        "border. Under favorable microclimates, lesions coalesce, spread upward to upper leaf sheaths and blades, forming",
+        "snake-skin-like banded patterns, leading to sheath rot, panicle blighting, and severe plant lodging."
+      ],
+      "organic_management": [
+        "Seed treatment with Trichoderma viride or Pseudomonas fluorescens @ 10 g/kg seed. Soil application of",
+        "Trichoderma enriched farmyard manure (FYM) @ 2.5 kg/ha mixed with 100 kg FYM at the time of final land",
+        "preparation. Foliar spray of Pseudomonas fluorescens @ 0.5% (5 g/L) at tillering and boot leaf stages.",
+        "Opt for wider spacing during transplanting (20 x 15 cm or 20 x 20 cm) to facilitate canopy aeration. Skim"
+      ],
+      "chemical_management": [
+        "Foliar spray targeted at the base of the plant: Hexaconazole 5% EC @ 2.0 mL/L or Validamycin 3% L @ 2.0 mL/L or",
+        "Thifluzamide 24% SC @ 0.75 mL/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L at the first",
+        "appearance of symptoms. Direct spray toward lower sheaths near the water line.",
+        "Active Ingredient: Hexaconazole 5% EC | Reference Formulation: Contaf (standard reference formulation) |"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nInitial symptoms develop on leaf sheaths near the water level as oval or oblong, water-soaked, greenish-gray spots\n(1-3 cm long). As lesions mature, the centers become bleached, grayish-white, with an irregular dark brown or purple\nborder. Under favorable microclimates, lesions coalesce, spread upward to upper leaf sheaths and blades, forming\nsnake-skin-like banded patterns, leading to sheath rot, panicle blighting, and severe plant lodging.",
+        "Official Agricultural Extension Advisory: Sheath Blight in Rice\n(Paddy)\nCausal Pathogen: Rhizoctonia solani (teleomorph Thanatephorus cucumeris)\nIssuing Source: ICAR-Indian Institute of Rice Research (IIRR) Advisory | Date: 2024-02-28",
+        "5. Verified Chemical Interventions\nFoliar spray targeted at the base of the plant: Hexaconazole 5% EC @ 2.0 mL/L or Validamycin 3% L @ 2.0 mL/L or\nThifluzamide 24% SC @ 0.75 mL/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L at the first\nappearance of symptoms. Direct spray toward lower sheaths near the water line.\n• Active Ingredient: Hexaconazole 5% EC | Reference Formulation: Contaf (standard reference formulation) |\nRegistrant: Rallis India Ltd | Source: DPPQS Approved Pesticide List (2024-02-12)\n• Active Ingredient: Validamycin 3% L | Reference Formulation: Sheathmar (standard antibiotic fungicide) |\nRegistrant: Dhanuka Agritech Ltd | Source: ICAR-IIRR Rice Pathology Bulletins (2024-01-25)\n• Active Ingredient: Thifluzamide 24% SC | Reference Formulation: Pulsor (registered formulation) | Registrant:\nDow / Gowan / Nissan Chemical | Source: CIBRC National Pesticide Gazette (2024-03-05)\nNotice: Chemical recommendations are derived strictly from central agricultural research advisories. Farmers must consult local district agricultural\nextension officers for local dosage and label claims."
+      ],
+      "sources": [
+        "sheath_blight_management_manual.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Gracefully default crop to 'paddy', identify Sheath Blight.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 11,
+    "category": "disease query without image",
+    "input": {
+      "image_path": null,
+      "crop": "paddy",
+      "language": "English",
+      "query": "paddy leaves showing spindle shaped lesions with brown margins and grey center"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Query Mode",
+      "confidence": 0.75,
+      "observations": [
+        "paddy leaves showing spindle shaped lesions with brown margins and grey center"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Rice Blast",
+      "confidence": 0.75,
+      "observations": [
+        "Farmer symptom description: 'paddy leaves showing spindle shaped lesions with brown margins and grey center'"
+      ],
+      "symptoms": [
+        "Rice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped",
+        "spots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions",
+        "enlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf",
+        "junction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy"
+      ],
+      "organic_management": [
+        "Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.",
+        "Maintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne",
+        "Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with",
+        "NPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and"
+      ],
+      "chemical_management": [
+        "Seed treatment with Tricyclazole 75% WP @ 2.0 g/kg seed. In the main field, foliar spray of Tricyclazole 75% WP @",
+        "0.6 g/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L or Isoprothiolane 40% EC @ 1.5 mL/L at the",
+        "first appearance of leaf blast lesions, repeating at booting/heading if neck blast weather persists.",
+        "Active Ingredient: Tricyclazole 75% WP | Reference Formulation: Beam (registered standard formulation) |"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nRice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped\nspots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions\nenlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf\njunction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy\ngrains and lodging.",
+        "Official Agricultural Extension Advisory: Rice Blast in Rice (Paddy)\nCausal Pathogen: Magnaporthe oryzae (anamorph Pyricularia oryzae)\nIssuing Source: ICAR - National Rice Research Institute (NRRI) Disease Compendium | Date: 2024-03-15",
+        "3. Cultural Management and Field Prevention\nPrevention: Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.\nMaintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne\ninoculum.\nCultural Practices: Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with\nNPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and\nremove susceptible grass weed hosts from bunds."
+      ],
+      "sources": [
+        "rice_blast_icar_bulletin.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Parse text symptom query, identify Rice Blast, retrieve RAG evidence.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 12,
+    "category": "image with multiple symptoms",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\multiple_symptoms.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Rice Blast",
+      "confidence": 0.76,
+      "observations": [
+        "Mixed symptom profile: spindle-shaped necrotic blast lesions in leaf center",
+        "Secondary marginal yellow discoloration resembling bacterial leaf blight",
+        "Primary fungal blast morphology identified as dominant symptom"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Rice Blast",
+      "confidence": 0.76,
+      "observations": [
+        "Mixed symptom profile: spindle-shaped necrotic blast lesions in leaf center",
+        "Secondary marginal yellow discoloration resembling bacterial leaf blight",
+        "Primary fungal blast morphology identified as dominant symptom"
+      ],
+      "symptoms": [
+        "Rice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped",
+        "spots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions",
+        "enlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf",
+        "junction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy"
+      ],
+      "organic_management": [
+        "Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.",
+        "Maintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne",
+        "Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with",
+        "NPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and"
+      ],
+      "chemical_management": [
+        "Seed treatment with Tricyclazole 75% WP @ 2.0 g/kg seed. In the main field, foliar spray of Tricyclazole 75% WP @",
+        "0.6 g/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L or Isoprothiolane 40% EC @ 1.5 mL/L at the",
+        "first appearance of leaf blast lesions, repeating at booting/heading if neck blast weather persists.",
+        "Active Ingredient: Tricyclazole 75% WP | Reference Formulation: Beam (registered standard formulation) |"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nRice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped\nspots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions\nenlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf\njunction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy\ngrains and lodging.",
+        "Official Agricultural Extension Advisory: Rice Blast in Rice (Paddy)\nCausal Pathogen: Magnaporthe oryzae (anamorph Pyricularia oryzae)\nIssuing Source: ICAR - National Rice Research Institute (NRRI) Disease Compendium | Date: 2024-03-15",
+        "3. Cultural Management and Field Prevention\nPrevention: Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.\nMaintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne\ninoculum.\nCultural Practices: Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with\nNPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and\nremove susceptible grass weed hosts from bunds."
+      ],
+      "sources": [
+        "rice_blast_icar_bulletin.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Recognize mixed symptoms, note dominant blast lesions and secondary yellowing.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 13,
+    "category": "Telugu output",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\rice_blast.jpg",
+      "crop": "paddy",
+      "language": "Telugu"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Rice Blast",
+      "confidence": 0.88,
+      "observations": [
+        "Spindle-shaped / diamond-shaped lesions observed on leaf blade",
+        "Lesions exhibit whitish-gray centers with dark reddish-brown margins",
+        "Early signs of leaf tissue necrosis coalescing along leaf axis"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "వరి అగ్గితెగులు (Rice Blast)",
+      "confidence": 0.88,
+      "observations": [
+        "Spindle-shaped / diamond-shaped lesions observed on leaf blade",
+        "Lesions exhibit whitish-gray centers with dark reddish-brown margins",
+        "Early signs of leaf tissue necrosis coalescing along leaf axis"
+      ],
+      "symptoms": [
+        "ఆకులపై ఇరువైపులా మొనదేలిన కంటి ఆకారపు లేదా కదురు ఆకారపు బూడిద రంగు మచ్చలు",
+        "మచ్చల అంచులు ముదురు ఎరుపు-గోధుమ రంగులో ఉంటాయి",
+        "తీవ్ర దశలో మెడవిరుపు (Neck Blast) సోకి గింజలు తాలుగా మారి పైరు పడిపోతుంది"
+      ],
+      "organic_management": [
+        "కిలో విత్తనానికి 10 గ్రా. సూడోమోనాస్ ఫ్లోరోసెన్స్ తో విత్తన శుద్ధి చేయండి",
+        "నత్రజని ఎరువులను ఒకేసారి కాకుండా 3-4 దఫాలుగా వేయండి",
+        "ఎకరానికి 150 కిలోల వేపపిండిని ఆఖరి దుక్కిలో వేయండి",
+        "గట్లపై ఉన్న గడ్డి జాతి కలుపు మొక్కలను తొలగించి శుభ్రంగా ఉంచండి"
+      ],
+      "chemical_management": [
+        "ట్రైసైక్లాజోల్ 75% WP (Tricyclazole 75% WP) @ 0.6 గ్రా. లీటరు నీటికి కలిపి పిచికారీ చేయండి (మూలం: ICAR-NRRI)",
+        "ఐసోప్రోతియోలేన్ 40% EC (Isoprothiolane 40% EC) @ 1.5 మి.లీ. లీటరు నీటికి (మూలం: ICAR Advisory)"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nRice blast affects all aerial parts of the rice plant. On leaves, symptoms appear as spindle-shaped or diamond-shaped\nspots with gray or white centers and distinct brown or reddish-brown margins. Under humid conditions, older lesions\nenlarge, coalesce, and cause complete leaf desiccation (leaf blast). At later stages, collar rot appears at the leaf\njunction, and neck blast attacks the neck node of the panicle, turning it dark brown to black and leading to chaffy\ngrains and lodging.",
+        "Official Agricultural Extension Advisory: Rice Blast in Rice (Paddy)\nCausal Pathogen: Magnaporthe oryzae (anamorph Pyricularia oryzae)\nIssuing Source: ICAR - National Rice Research Institute (NRRI) Disease Compendium | Date: 2024-03-15",
+        "3. Cultural Management and Field Prevention\nPrevention: Avoid excessive and staggered nitrogen fertilizer application; split nitrogen into three or four doses.\nMaintain optimal plant density and ensure good soil drainage. Treat seed prior to sowing to eliminate seed-borne\ninoculum.\nCultural Practices: Destroy crop residues and volunteer rice plants after harvest. Practice balanced fertilization with\nNPK ratio of 4:2:1 or as per soil test recommendations, with split nitrogen application. Maintain field sanitation and\nremove susceptible grass weed hosts from bunds."
+      ],
+      "sources": [
+        "rice_blast_icar_bulletin.pdf"
+      ],
+      "warning": "దృష్టి విశ్లేషణ అనేది ఒక స్వయంచాలక అంచనా మాత్రమే, ఇది ప్రయోగశాల నిర్ధారణ కాదు. రసాయనాలు వాడే ముందు స్థానిక వ్యవసాయ విస్తరణ అధికారి (KVK) ని సంప్రదించండి.",
+      "language": "Telugu"
+    },
+    "expected_behavior": "Deliver Rice Blast diagnosis in Telugu script with agricultural advisory.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 14,
+    "category": "Hindi output",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\sheath_blight.jpg",
+      "crop": "paddy",
+      "language": "Hindi"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Sheath Blight",
+      "confidence": 0.89,
+      "observations": [
+        "Oval to oblong water-soaked greenish-gray lesions detected on lower leaf sheath",
+        "Irregular dark brown borders with banded snake-skin-like pattern",
+        "Lesions localized near the water/soil line"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "शीथ ब्लाइट / पर्णच्छद झुलसा रोग (Sheath Blight)",
+      "confidence": 0.89,
+      "observations": [
+        "Oval to oblong water-soaked greenish-gray lesions detected on lower leaf sheath",
+        "Irregular dark brown borders with banded snake-skin-like pattern",
+        "Lesions localized near the water/soil line"
+      ],
+      "symptoms": [
+        "जल स्तर के निकट पत्तियों के आवरण (शीथ) पर अंडाकार या अनियमित धूसर-हरे धब्बे",
+        "धब्बों के किनारे गहरे भूरे होकर सांप की केंचुल जैसी धारियां बनाते हैं",
+        "अनुकूल मौसम में यह रोग ऊपर की पत्तियों तक फैल जाता है जिससे पौधे गिर जाते हैं"
+      ],
+      "organic_management": [
+        "रोपाई के समय उचित दूरी रखें ताकि हवा का संचार बना रहे",
+        "ट्राइकोडर्मा विरिडी या स्यूडोमोनास @ 10 ग्राम प्रति किग्रा बीज से बीजोपचार करें",
+        "खेत में लगातार जलभराव न रखें, बारी-बारी से गीला और सूखा रखें",
+        "अतिरिक्त नाइट्रोजन के प्रयोग से बचें तथा पोटाश की संस्तुत मात्रा डालें"
+      ],
+      "chemical_management": [
+        "हेक्साकोनाजोल 5% EC (Hexaconazole 5% EC) @ 2.0 मिली अथवा वैलिडामाइसिन 3% L @ 2.0 मिली प्रति लीटर पौधे के निचले हिस्से पर छिड़कें (स्रोत: ICAR-IIRR)",
+        "थिफ्लूजामाइड 24% SC (Thifluzamide 24% SC) @ 0.75 मिली प्रति लीटर पानी (स्रोत: CIBRC Gazette)"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nInitial symptoms develop on leaf sheaths near the water level as oval or oblong, water-soaked, greenish-gray spots\n(1-3 cm long). As lesions mature, the centers become bleached, grayish-white, with an irregular dark brown or purple\nborder. Under favorable microclimates, lesions coalesce, spread upward to upper leaf sheaths and blades, forming\nsnake-skin-like banded patterns, leading to sheath rot, panicle blighting, and severe plant lodging.",
+        "Official Agricultural Extension Advisory: Sheath Blight in Rice\n(Paddy)\nCausal Pathogen: Rhizoctonia solani (teleomorph Thanatephorus cucumeris)\nIssuing Source: ICAR-Indian Institute of Rice Research (IIRR) Advisory | Date: 2024-02-28",
+        "5. Verified Chemical Interventions\nFoliar spray targeted at the base of the plant: Hexaconazole 5% EC @ 2.0 mL/L or Validamycin 3% L @ 2.0 mL/L or\nThifluzamide 24% SC @ 0.75 mL/L or Azoxystrobin 18.2% + Difenoconazole 11.4% SC @ 1.0 mL/L at the first\nappearance of symptoms. Direct spray toward lower sheaths near the water line.\n• Active Ingredient: Hexaconazole 5% EC | Reference Formulation: Contaf (standard reference formulation) |\nRegistrant: Rallis India Ltd | Source: DPPQS Approved Pesticide List (2024-02-12)\n• Active Ingredient: Validamycin 3% L | Reference Formulation: Sheathmar (standard antibiotic fungicide) |\nRegistrant: Dhanuka Agritech Ltd | Source: ICAR-IIRR Rice Pathology Bulletins (2024-01-25)\n• Active Ingredient: Thifluzamide 24% SC | Reference Formulation: Pulsor (registered formulation) | Registrant:\nDow / Gowan / Nissan Chemical | Source: CIBRC National Pesticide Gazette (2024-03-05)\nNotice: Chemical recommendations are derived strictly from central agricultural research advisories. Farmers must consult local district agricultural\nextension officers for local dosage and label claims."
+      ],
+      "sources": [
+        "sheath_blight_management_manual.pdf"
+      ],
+      "warning": "दृष्टि विश्लेषण एक स्वचालित अनुमान है और यह प्रयोगशाला निदान नहीं है। रासायनिक छिड़काव से पहले स्थानीय कृषि विस्तार अधिकारी (KVK) से परामर्श करें।",
+      "language": "Hindi"
+    },
+    "expected_behavior": "Deliver Sheath Blight diagnosis in Hindi Devanagari script with advisory.",
+    "status": "PASSED"
+  },
+  {
+    "test_id": 15,
+    "category": "English output",
+    "input": {
+      "image_path": "C:\\Users\\gamid\\.gemini\\antigravity\\scratch\\RAG\\ai_disease\\data\\images\\bacterial_leaf_blight.jpg",
+      "crop": "paddy",
+      "language": "English"
+    },
+    "vision_result": {
+      "crop": "paddy",
+      "possible_disease": "Bacterial Leaf Blight",
+      "confidence": 0.9,
+      "observations": [
+        "Water-soaked marginal lesions enlarging along leaf edges with wavy borders",
+        "Straw-yellow to bleached white foliar desiccation starting from leaf tips",
+        "Characteristic marginal leaf blight symptom without spindle shape"
+      ]
+    },
+    "retrieved_evidence_count": 4,
+    "final_result": {
+      "crop": "paddy",
+      "disease": "Bacterial Leaf Blight",
+      "confidence": 0.9,
+      "observations": [
+        "Water-soaked marginal lesions enlarging along leaf edges with wavy borders",
+        "Straw-yellow to bleached white foliar desiccation starting from leaf tips",
+        "Characteristic marginal leaf blight symptom without spindle shape"
+      ],
+      "symptoms": [
+        "Water-soaked lesions begin at leaf margins and tips, rapidly enlarging along the leaf edges with characteristic wavy or",
+        "undulating borders. Lesions turn straw-yellow to bleached white as the tissue dies. In early morning under moist",
+        "conditions, milky bacterial ooze droplets form on young lesions, drying into small yellowish beads. In systemic 'kresek'",
+        "phase (seedling stage), leaves wilt, roll up, and die rapidly."
+      ],
+      "organic_management": [
+        "Use certified disease-free seed and resistant/tolerant cultivars (e.g., IR64, Improved Samba Mahsuri).",
+        "Avoid clipping seedling leaf tips during transplanting. Avoid deep submergence of rice hills.",
+        "Adopt intermittent irrigation and field drainage to expose the soil to air. Withhold top dressing of",
+        "nitrogen fertilizers immediately upon first symptom detection. Increase potassium application (Muriate of Potash) by"
+      ],
+      "chemical_management": [
+        "Seed soaking in Streptocycline (90% Streptomycin sulphate + 10% Tetracycline hydrochloride) @ 0.1 g/L with Copper",
+        "Oxychloride @ 1.0 g/L for 8-10 hours. Foliar spray of Copper Hydroxide 77% WP @ 2.0 g/L or Streptocycline @ 0.1",
+        "g/L + Copper Oxychloride 50% WP @ 2.5 g/L during active tiller stage. Avoid spraying during hot sunny hours.",
+        "Active Ingredient: Copper Hydroxide 77% WP | Reference Formulation: Kocide 2000 (standard registered"
+      ],
+      "evidence": [
+        "1. Identification and Morphological Symptoms\nWater-soaked lesions begin at leaf margins and tips, rapidly enlarging along the leaf edges with characteristic wavy or\nundulating borders. Lesions turn straw-yellow to bleached white as the tissue dies. In early morning under moist\nconditions, milky bacterial ooze droplets form on young lesions, drying into small yellowish beads. In systemic 'kresek'\nphase (seedling stage), leaves wilt, roll up, and die rapidly.",
+        "Official Agricultural Extension Advisory: Bacterial Leaf Blight in\nRice (Paddy)\nCausal Pathogen: Xanthomonas oryzae pv. oryzae\nIssuing Source: TNAU Agritech Portal & IRRI Rice Knowledge Bank | Date: 2024-04-10",
+        "2. Environmental Epidemiology & Causes\nBacterium enters leaves through natural openings (hydathodes) or mechanical injuries caused by high winds or\nstorms. Promoted by high ambient temperatures (25-34 deg C), high humidity (>85%), wind-driven heavy rains, deep\nstanding water in fields, and heavy nitrogen fertilization."
+      ],
+      "sources": [
+        "bacterial_leaf_blight_guidelines.pdf"
+      ],
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application.",
+      "language": "English"
+    },
+    "expected_behavior": "Deliver BLB diagnosis strictly adhering to Phase 7 English JSON schema.",
+    "status": "PASSED"
+  }
+]
