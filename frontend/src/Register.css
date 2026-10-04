@@ -1,0 +1,171 @@
+/* ================================
+   AGRI AGENT REGISTER PAGE
+================================ */
+
+.register-card {
+  padding-bottom: 30px;
+}
+
+
+/* ================================
+   REGISTER FORM SPACING
+================================ */
+
+.register-card .login-form > label {
+  margin-bottom: 8px;
+}
+
+.register-card .login-input {
+  margin-bottom: 16px;
+}
+
+
+/* ================================
+   SELECT / DROPDOWN
+================================ */
+
+.register-card .login-input select {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  appearance: auto;
+}
+
+.register-card .login-input select:invalid {
+  color: var(--muted);
+}
+
+.register-card .login-input select option {
+  color: var(--text);
+  background: #ffffff;
+}
+
+
+/* ================================
+   DATE INPUT
+================================ */
+
+.register-card .login-input input[type="date"] {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.register-card .login-input input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+
+/* ================================
+   TEXT / PASSWORD / PINCODE INPUTS
+================================ */
+
+.register-card .login-input input[type="text"],
+.register-card .login-input input[type="password"] {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  padding: 0;
+}
+
+.register-card .login-input input::placeholder {
+  color: var(--muted);
+  opacity: 0.9;
+}
+
+
+/* ================================
+   PINCODE
+================================ */
+
+.register-card .login-input input[inputmode="numeric"] {
+  letter-spacing: 0.5px;
+}
+
+
+/* ================================
+   REGISTER BUTTON
+================================ */
+
+.register-card .login-button {
+  margin-top: 3px;
+}
+
+
+/* ================================
+   REGISTER LINK
+================================ */
+
+.register-section button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+
+/* ================================
+   ERROR MESSAGE
+================================ */
+
+.register-card .login-form > div[style] {
+  line-height: 1.5;
+}
+
+
+/* ================================
+   RESPONSIVE
+================================ */
+
+@media (max-width: 520px) {
+  .register-card {
+    padding-bottom: 25px;
+  }
+
+  .register-card .login-form > label {
+    margin-bottom: 7px;
+  }
+
+  .register-card .login-input {
+    margin-bottom: 14px;
+  }
+
+  .register-card .login-input select,
+  .register-card .login-input input[type="date"],
+  .register-card .login-input input[type="text"],
+  .register-card .login-input input[type="password"] {
+    font-size: 14px;
+  }
+}
+
+
+/* ================================
+   VERY SMALL SCREENS
+================================ */
+
+@media (max-width: 380px) {
+  .register-card {
+    padding-bottom: 20px;
+  }
+
+  .register-card .login-input {
+    margin-bottom: 13px;
+  }
+}
