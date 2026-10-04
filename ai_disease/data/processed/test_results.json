@@ -377,7 +377,7 @@
       "chemical_management": [],
       "evidence": [],
       "sources": [],
-      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected plant leaf or panicle.",
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected crop part (leaf, fruit, stem, or branch).",
       "language": "English"
     },
     "expected_behavior": "Flag blurriness, return possible_disease='uncertain', confidence=0.0.",
@@ -412,7 +412,7 @@
       "chemical_management": [],
       "evidence": [],
       "sources": [],
-      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected plant leaf or panicle.",
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected crop part (leaf, fruit, stem, or branch).",
       "language": "English"
     },
     "expected_behavior": "Identify non-crop object, confidence=0.0, advise uploading crop leaf.",
@@ -447,7 +447,7 @@
       "chemical_management": [],
       "evidence": [],
       "sources": [],
-      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected plant leaf or panicle.",
+      "warning": "Vision prediction is an automated estimation and not a laboratory diagnosis. Verify with local agricultural extension officer or KVK before chemical application. Please upload a clear, focused photograph of the affected crop part (leaf, fruit, stem, or branch).",
       "language": "English"
     },
     "expected_behavior": "Flag severe underexposure/darkness, confidence=0.0, uncertainty warning.",
