@@ -1,3 +1,4 @@
+.gitignore
 # AgriAgent — Part 2: RAG + Vision
 
 This folder contains the complete, independent **Part 2: RAG + Vision** module (`ai_disease`) for the AgriAgent hackathon project.
