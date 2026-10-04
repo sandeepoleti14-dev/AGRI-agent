@@ -467,6 +467,29 @@ class DiseaseAgent:
                     warning=DISCLAIMER_TRANSLATIONS.get("Hindi", DISCLAIMER_TRANSLATIONS["English"]),
                     language=language
                 )
+            elif language == "Tamil":
+                return DiseaseAnalysisResult(
+                    crop=crop_name,
+                    disease="ஆரோக்கியமான நெல் பயிர் (Healthy Paddy)",
+                    confidence=confidence,
+                    observations=[
+                        "நெல் இலைகள் ஆரோக்கியமாகவும் இயல்பான பச்சை நிறத்தில் உள்ளன",
+                        "இலைகளில் எந்தவொரு பூஞ்சை அல்லது பாக்டீரியா நோய் அறிகுறிகளும் இல்லை"
+                    ],
+                    symptoms=[],
+                    organic_management=[
+                        "மண்ணின் சோதனை அடிப்படையில் சமநிலை NPK உரங்களை பயன்படுத்தவும்",
+                        "நெல் வயலில் நீர் நிலையை கட்டுப்படுத்தவும்",
+                        "பயிர்களை முறையாக கண்காணிக்கவும்"
+                    ],
+                    chemical_management=[
+                        "ஆரோக்கியமான பயிருக்கு எந்தவொரு வேதியியல் மருந்துகளையும் பயன்படுத்த தேவையில்லை"
+                    ],
+                    evidence=["ICAR/IRRI crop standards: No foliar lesions or pathogen symptoms detected."],
+                    sources=sources or ["ICAR Crop Production Guide"],
+                    warning=DISCLAIMER_TRANSLATIONS.get("Tamil", DISCLAIMER_TRANSLATIONS["English"]),
+                    language=language
+                )
             else:
                 return DiseaseAnalysisResult(
                     crop=crop_name,
