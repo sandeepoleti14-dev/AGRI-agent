@@ -1,31 +1,24 @@
-import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { ChatOpenAI } from "@langchain/openai";
+import { GoogleGenAI } from "@google/genai";
 
 import { verifyRecommendation } from "../verifier/verifier.js";
 
-
-/*
- * Real LLM used by the Master and Decision Agents.
- *
- * API key must be supplied through:
- *
- * OPENAI_API_KEY=...
- *
- * in the .env file.
- */
-
-const model = new ChatOpenAI({
-  model: "gpt-4o-mini",
-  temperature: 0.1,
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
+const MODEL = "gemini-3.5-flash-lite";
+async function generateText(systemInstruction, userPrompt) {
+  const response = await ai.models.generateContent({
+    model: MODEL,
+    contents: userPrompt,
+    config: {
+      systemInstruction,
+      temperature: 0.1,
+    },
+  });
 
-/*
- * MASTER AGENT
- *
- * Understands the farmer request and coordinates
- * the specialist agents.
- */
+  return response.text || "";
+}
 
 export async function masterAgentNode(state) {
   const prompt = state.farmerPrompt;
@@ -37,8 +30,8 @@ export async function masterAgentNode(state) {
     };
   }
 
-  const response = await model.invoke([
-    new SystemMessage(`
+  const response = await generateText(
+    `
 You are the Master Agent of AGRI Agent.
 
 Your job is to understand the farmer's request
@@ -69,10 +62,9 @@ Important rules:
 - Do not invent weather information.
 - Do not invent sources.
 - Keep the farmer's original question intact.
-    `),
-
-    new HumanMessage(prompt),
-  ]);
+    `,
+    prompt
+  );
 
   return {
     messages: [response],
@@ -80,91 +72,36 @@ Important rules:
   };
 }
 
-
-/*
- * VISION AGENT
- *
- * Role 1 only orchestrates Vision.
- * The actual Vision implementation belongs
- * to Role 2.
- */
-
 export async function visionAgentNode(state) {
   if (!state.visionDetection) {
-    return {
-      status: "vision_skipped",
-    };
+    return { status: "vision_skipped" };
   }
 
-  return {
-    status: "vision_completed",
-  };
+  return { status: "vision_completed" };
 }
-
-
-/*
- * WEATHER AGENT
- *
- * Role 1 only orchestrates Weather.
- * The actual Weather implementation belongs
- * to Role 3.
- */
 
 export async function weatherAgentNode(state) {
   if (!state.weatherData) {
-    return {
-      status: "weather_skipped",
-    };
+    return { status: "weather_skipped" };
   }
 
-  return {
-    status: "weather_completed",
-  };
+  return { status: "weather_completed" };
 }
-
-
-/*
- * RAG KNOWLEDGE AGENT
- *
- * Role 1 only orchestrates RAG.
- * The actual RAG implementation belongs
- * to Role 2.
- */
 
 export async function ragAgentNode(state) {
   if (
     !state.ragEvidence ||
     state.ragEvidence.length === 0
   ) {
-    return {
-      status: "rag_skipped",
-    };
+    return { status: "rag_skipped" };
   }
 
-  return {
-    status: "rag_completed",
-  };
+  return { status: "rag_completed" };
 }
 
-
-/*
- * DECISION AGENT
- *
- * Combines:
- *
- * - Farmer question
- * - Farmer profile
- * - Vision result
- * - Weather data
- * - RAG evidence
- *
- * The Decision Agent must not invent missing
- * information.
- */
-
 export async function decisionAgentNode(state) {
-  const response = await model.invoke([
-    new SystemMessage(`
+  const response = await generateText(
+    `
 You are the Decision Agent of AGRI Agent.
 
 You provide a cautious, evidence-based agricultural
@@ -197,55 +134,33 @@ Rules:
 
 Return a concise recommendation that can be shown
 to a farmer.
-    `),
-
-    new HumanMessage(
-      JSON.stringify(
-        {
-          farmerPrompt: state.farmerPrompt,
-
-          farmerProfile:
-            state.farmerProfile,
-
-          visionDetection:
-            state.visionDetection,
-
-          weatherData:
-            state.weatherData,
-
-          ragEvidence:
-            state.ragEvidence,
-        },
-        null,
-        2
-      )
-    ),
-  ]);
+    `,
+    JSON.stringify(
+      {
+        farmerPrompt: state.farmerPrompt,
+        farmerProfile: state.farmerProfile,
+        visionDetection: state.visionDetection,
+        weatherData: state.weatherData,
+        ragEvidence: state.ragEvidence,
+      },
+      null,
+      2
+    )
+  );
 
   return {
-    decision: response.content,
+    decision: response,
     status: "decision_completed",
   };
 }
 
-
-/*
- * VERIFIER
- *
- * Runs after the Decision Agent.
- */
-
 export async function verifierNode(state) {
-  const verification =
-    verifyRecommendation(state);
+  const verification = verifyRecommendation(state);
 
   return {
     verification,
-
     needsEscalation:
       verification.status !== "verified",
-
-    status:
-      "verification_completed",
+    status: "verification_completed",
   };
 }
