@@ -1,0 +1,21 @@
+{
+  "name": "agri-agent-role1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+ "scripts": {
+  "start": "node src/index.js",
+  "test": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@langchain/core": "^1.2.14",
+    "@langchain/langgraph": "^1.4.19",
+    "@langchain/openai": "^1.6.2",
+    "dotenv": "^18.0.5",
+    "zod": "^4.6.5"
+  }
+}
