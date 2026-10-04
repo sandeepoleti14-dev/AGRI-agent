@@ -7,8 +7,8 @@ async function main() {
 
   const input = {
     farmerPrompt:
-      "My tomato leaves are showing yellow spots. What should I do?",
-    
+     "My tomato leaves are showing yellow spots. Will rain and humidity affect the treatment?",
+
     farmerProfile: {
       crop: "Tomato",
       soil_type: "Red Loam",
