@@ -1,0 +1,9 @@
+# Dependencies for Part 2: RAG + Vision (ai_disease)
+chromadb>=0.5.0
+pydantic>=2.5.0
+pillow>=10.0.0
+pymupdf>=1.24.0
+pypdf>=4.0.0
+reportlab>=4.0.0
+numpy>=1.24.0
+pytest>=8.0.0
