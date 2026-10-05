@@ -22,7 +22,6 @@ import {
   shouldEscalate,
 } from "./router.js";
 
-
 /*
  * AGRI Agent — Role 1
  *
@@ -34,25 +33,26 @@ import {
  *   ↓
  * Master Agent
  *   ↓
- * Router
- *   ↓
- * Required specialist agents
+ * Specialist Coordinator
+ *   ├── Vision + RAG through Role 2
+ *   └── Weather when required
  *   ↓
  * Decision Agent
  *   ↓
  * Verifier
  *   ↓
  * END
+ *
+ * The Specialist Coordinator is intentionally a
+ * single fan-in point. This guarantees that the
+ * Decision Agent receives the completed specialist
+ * results only once.
  */
 
 const workflow = new StateGraph(AgriState);
 
-
 /*
- * Register nodes
- *
- * IMPORTANT:
- * Node names must not match state attributes.
+ * Register main nodes.
  */
 
 workflow.addNode(
@@ -61,18 +61,74 @@ workflow.addNode(
 );
 
 workflow.addNode(
-  "vision",
-  visionAgentNode
-);
+  "specialists",
+  async (state) => {
+    const selectedAgents = routeAfterMaster(state);
 
-workflow.addNode(
-  "weather",
-  weatherAgentNode
-);
+    let currentState = {
+      ...state,
+      selectedAgents,
+    };
 
-workflow.addNode(
-  "rag",
-  ragAgentNode
+    /*
+     * Run selected specialist agents sequentially.
+     *
+     * Role 2 performs Vision + RAG together, so
+     * we call visionAgentNode() only once when
+     * the Vision route is selected.
+     */
+    if (selectedAgents.includes("vision")) {
+      const visionResult = await visionAgentNode(currentState);
+
+      currentState = {
+        ...currentState,
+        ...visionResult,
+      };
+    }
+
+    /*
+     * If only RAG is required, Role 2 still needs
+     * to provide the agricultural evidence.
+     *
+     * Our current Role 2 integration performs
+     * Vision + RAG together, so the RAG route
+     * also uses the Role 2 analysis.
+     */
+    if (
+      selectedAgents.includes("rag") &&
+      !selectedAgents.includes("vision")
+    ) {
+      const ragResult = await visionAgentNode(currentState);
+
+      currentState = {
+        ...currentState,
+        ...ragResult,
+      };
+    }
+
+    /*
+     * Weather is currently an adapter placeholder.
+     * When Role 3 is connected, this node will call
+     * the real Weather Agent.
+     */
+    if (selectedAgents.includes("weather")) {
+      const weatherResult = await weatherAgentNode(currentState);
+
+      currentState = {
+        ...currentState,
+        ...weatherResult,
+      };
+    }
+
+    return {
+      selectedAgents: currentState.selectedAgents,
+      visionDetection: currentState.visionDetection,
+      ragEvidence: currentState.ragEvidence,
+      weatherData: currentState.weatherData,
+      status: "specialists_completed",
+      errors: currentState.errors || [],
+    };
+  }
 );
 
 workflow.addNode(
@@ -85,7 +141,6 @@ workflow.addNode(
   verifierNode
 );
 
-
 /*
  * START → Master
  */
@@ -95,51 +150,34 @@ workflow.addEdge(
   "master"
 );
 
+/*
+ * Master → Specialist Coordinator
+ *
+ * The coordinator internally uses the existing
+ * routeAfterMaster() function to determine which
+ * specialists are required.
+ */
+
+workflow.addEdge(
+  "master",
+  "specialists"
+);
 
 /*
- * Master → Specialist Agents
+ * Specialist Coordinator → Decision Agent
  *
- * LangGraph can fan out to multiple agents.
- *
- * All selected branches eventually converge
- * on the Decision Agent.
+ * Decision runs only after the selected specialists
+ * have completed.
  */
 
 workflow.addConditionalEdges(
-  "master",
-  routeAfterMaster,
+  "specialists",
+  shouldProceedToDecision,
   {
-    vision: "vision",
-    weather: "weather",
-    rag: "rag",
+    true: "decisionAgent",
+    false: END,
   }
 );
-
-
-/*
- * Specialist Agents → Decision Agent
- *
- * These edges create the fan-in point.
- *
- * LangGraph waits for the required upstream
- * branches before continuing.
- */
-
-workflow.addEdge(
-  "vision",
-  "decisionAgent"
-);
-
-workflow.addEdge(
-  "weather",
-  "decisionAgent"
-);
-
-workflow.addEdge(
-  "rag",
-  "decisionAgent"
-);
-
 
 /*
  * Decision → Verifier
@@ -154,9 +192,14 @@ workflow.addConditionalEdges(
   }
 );
 
-
 /*
  * Verifier → END
+ *
+ * Whether verification passes or escalation is
+ * required, the graph ends here.
+ *
+ * The verification result and escalation state
+ * remain available in the final graph state.
  */
 
 workflow.addConditionalEdges(
@@ -168,16 +211,14 @@ workflow.addConditionalEdges(
   }
 );
 
-
 /*
  * Checkpointer
  *
- * MemorySaver gives each conversation thread
- * persistent graph state during the running process.
+ * MemorySaver keeps graph state associated with
+ * the conversation thread while the process runs.
  */
 
 const checkpointer = new MemorySaver();
-
 
 /*
  * Compile the graph.

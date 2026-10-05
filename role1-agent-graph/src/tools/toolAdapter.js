@@ -1,78 +1,153 @@
-/*
- * AGRI Agent — Role 1 Tool Adapter
- *
- * Role 1 does NOT own the actual Vision, Weather,
- * or RAG implementations.
- *
- * This adapter provides a clean interface through
- * which those implementations can be connected later.
- */
+import { spawn } from "child_process";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const projectRoot = path.resolve(__dirname, "../../../");
+
+const role2BridgePath = path.join(
+  projectRoot,
+  "integration",
+  "role2_bridge.py"
+);
+
+const role3BridgePath = path.join(
+  projectRoot,
+  "integration",
+  "role3_bridge.py"
+);
+
+const pythonExecutable =
+  process.env.PYTHON_EXECUTABLE ||
+  process.env.PYTHON ||
+  process.env.PYTHON3 ||
+  (process.platform === "win32"
+    ? "python.exe"
+    : "python3");
+
+function callPythonBridge(bridgePath, input, bridgeName) {
+  return new Promise((resolve, reject) => {
+    const python = spawn(
+      pythonExecutable,
+      [bridgePath],
+      {
+        cwd: projectRoot,
+      }
+    );
+
+    let stdout = "";
+    let stderr = "";
+
+    python.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    python.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    python.on("error", (error) => {
+      reject(error);
+    });
+
+    python.on("close", (code) => {
+      if (code !== 0) {
+        reject(
+          new Error(
+            `${bridgeName} failed with code ${code}: ${
+              stderr || "Unknown error"
+            }`
+          )
+        );
+        return;
+      }
+
+      try {
+        const lines = stdout
+          .split(/\r?\n/)
+          .map((line) => line.trim())
+          .filter(Boolean);
+        const payload = lines.at(-1) || stdout.trim();
+        const response = JSON.parse(payload);
+
+        if (response.status === "error") {
+          reject(
+            new Error(
+              response.error ||
+                `${bridgeName} returned an error.`
+            )
+          );
+          return;
+        }
+
+        resolve(response.result);
+      } catch (error) {
+        reject(
+          new Error(
+            `Invalid response from ${bridgeName}: ${error.message}\n${stdout}`
+          )
+        );
+      }
+    });
+
+    python.stdin.write(JSON.stringify(input));
+    python.stdin.end();
+  });
+}
 
 /**
- * Vision Agent adapter
- *
- * Role 2 will provide the actual implementation.
+ * Role 2 combined Vision + RAG analysis
  */
-export async function runVisionAgent(input) {
-  /*
-   * Temporary placeholder.
-   *
-   * Later this function will call the real Vision Agent.
-   */
-
+export async function runRole2Analysis(input) {
   if (!input) {
     return null;
   }
 
-  return input;
+  return callPythonBridge(
+    role2BridgePath,
+    input,
+    "Role 2 bridge"
+  );
 }
 
 /**
- * Weather Agent adapter
+ * Role 3 tools + Decision Agent
  *
- * Role 3 will provide the actual weather implementation.
+ * Provides:
+ * - farmer profile
+ * - weather
+ * - final decision
+ */
+export async function runRole3Analysis(input) {
+  if (!input) {
+    return null;
+  }
+
+  return callPythonBridge(
+    role3BridgePath,
+    input,
+    "Role 3 bridge"
+  );
+}
+
+/**
+ * Weather adapter
  */
 export async function runWeatherAgent(input) {
-  /*
-   * Temporary placeholder.
-   *
-   * Later this function will call the real Weather Agent.
-   */
-
   if (!input) {
     return null;
   }
 
-  return input;
-}
-
-/**
- * RAG Knowledge adapter
- *
- * Role 2 will provide the actual RAG implementation.
- */
-export async function runRagAgent(input) {
-  /*
-   * Temporary placeholder.
-   *
-   * Later this function will call the real RAG system.
-   */
-
-  if (!input) {
-    return [];
-  }
-
-  return Array.isArray(input) ? input : [input];
+  return runRole3Analysis(input);
 }
 
 /**
  * Combined tool interface
- *
- * Role 1 can use this object without knowing
- * how the individual tools are implemented.
  */
 export const agriTools = {
-  vision: runVisionAgent,
+  role2: runRole2Analysis,
+  role3: runRole3Analysis,
   weather: runWeatherAgent,
-  rag: runRagAgent,
 };

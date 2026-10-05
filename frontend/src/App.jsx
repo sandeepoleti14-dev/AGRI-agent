@@ -35,6 +35,9 @@ import {
 
 import "./App.css";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function App() {
   // ============================================================
   // LOGIN STATE
@@ -248,26 +251,68 @@ function App() {
   // ============================================================
   // FARM DATA
   // ============================================================
+const farmData = {
+  farmerName:
+    registeredAccount?.name || farmerId || "Farmer",
 
-  const farmData = {
-    farmerName: registeredAccount?.name || farmerId || "Farmer",
-    farmerId: farmerId || "Not available",
-    region: registeredAccount?.region || "Not set",
-    crop: registeredAccount?.crop || "Not set",
-    farmStatus: "Not available",
-    season: "Not available",
-    growthStage: "Not available",
-    cropHealth: "Not available",
-    soilCondition: "Not available",
-    soilMoisture: null,
-    lastSoilCheck: "Not available",
-    temperature: "Not available",
-    humidity: "Not available",
-    rainfall: "Not available",
-    wind: "Not available",
-    lastAnalysis: "No analysis yet",
-    recentDiagnosis: "No crop analysis available yet",
-  };
+  farmerId:
+    farmerId || "Not available",
+
+  region:
+    registeredAccount?.region ||
+    decisionResult?.region ||
+    "Avadi",
+
+  crop:
+    registeredAccount?.crop ||
+    decisionResult?.crop ||
+    "Tomato",
+
+  farmStatus:
+    decisionResult
+      ? "Analysis available"
+      : "Awaiting analysis",
+
+  season: "Current season",
+
+  growthStage: "Not available",
+
+  cropHealth:
+    decisionResult?.what ||
+    "Awaiting analysis",
+
+  soilCondition: "Not available",
+
+  soilMoisture: null,
+
+  lastSoilCheck: "Not available",
+
+  temperature:
+    decisionResult?.weather?.current?.temperature_c != null
+      ? `${decisionResult.weather.current.temperature_c}Â°C`
+      : "Not available",
+
+  humidity:
+    decisionResult?.weather?.current?.humidity_pct != null
+      ? `${decisionResult.weather.current.humidity_pct}%`
+      : "Not available",
+
+  rainfall:
+    decisionResult?.weather?.current?.precipitation_mm != null
+      ? `${decisionResult.weather.current.precipitation_mm} mm`
+      : "Not available",
+
+  wind: "Not available",
+
+  lastAnalysis:
+    decisionResult
+      ? "Latest analysis available"
+      : "No analysis yet",
+
+  recentDiagnosis:
+    decisionResult?.what ||
+    "No crop analysis available yet",
+};
 
   // ============================================================
   // LOGIN
@@ -353,23 +398,210 @@ function App() {
   // SUBMIT ANALYSIS REQUEST
   // ============================================================
 
-  const runAgentWorkflow = () => {
-    setIsProcessing(true);
+  const runAgentWorkflow = async (currentQuestion) => {
+  setIsProcessing(true);
+  setWorkflowComplete(false);
+  setCompletedAgents([]);
+  setActiveAgent(0);
+  setDecisionResult(null);
 
-    setWorkflowComplete(false);
-    setCompletedAgents([]);
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/analyze`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          farmerPrompt:
+            currentQuestion ||
+            question ||
+            "Please analyze my crop.",
+
+          farmerProfile: {
+            name:
+              registeredAccount?.name ||
+              farmerId ||
+              "Farmer",
+
+            // Only send a numeric farmer ID.
+            id:
+              /^\d+$/.test(String(farmerId))
+                ? Number(farmerId)
+                : null,
+
+            crop:
+              registeredAccount?.crop ||
+              null,
+
+            place_name:
+              registeredAccount?.region ||
+              null,
+          },
+
+          // Image upload will be connected separately.
+          // For this first end-to-end test, text analysis is enough.
+          visionDetection: null,
+
+          weatherData: null,
+
+          ragEvidence: [],
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || data.status !== "success") {
+      throw new Error(
+        data.error ||
+          "AGRI Agent analysis failed."
+      );
+    }
+
+    const result = data.result || {};
+
+    console.log("REAL AGRI API RESULT:", result);
+    const decision = result.decision || {};
+
+    const candidates =
+      Array.isArray(decision.candidates)
+        ? decision.candidates
+        : [];
+
+    const topCandidate =
+      candidates[0] || {};
+
+    const evidence =
+      Array.isArray(decision.evidence)
+        ? decision.evidence
+        : [];
+
+    const actions =
+      Array.isArray(decision.actions)
+        ? decision.actions
+        : [];
+
+    setCompletedAgents([
+      0, 1, 2, 3, 4, 5
+    ]);
+
     setActiveAgent(-1);
-    setDecisionResult(null);
 
-    /*
-     * Backend integration point.
-     *
-     * The real Master Agent / LangGraph workflow will eventually
-     * be called here.
-     *
-     * For now we do NOT generate fake agent results.
-     */
-  };
+    setDecisionResult({
+      confidence:
+        Number(decision.confidence_score) || 0,
+
+      crop:
+        result.visionDetection?.crop ||
+        registeredAccount?.crop ||
+        "Tomato",
+
+      region:
+        registeredAccount?.region ||
+        "Avadi",
+
+      weather:
+        result.weatherData || null,
+
+      what:
+        topCandidate.name ||
+        "Uncertain",
+
+      whatDescription:
+        topCandidate.visual_evidence ||
+        "More crop evidence is required.",
+
+      candidates:
+        candidates.map(
+          (candidate) =>
+            `${candidate.name} (${candidate.confidence_pct}%)`
+        ),
+
+      why:
+        topCandidate.visual_evidence ||
+        "The system needs additional evidence to confirm the issue.",
+
+      evidence:
+        evidence.map(
+          (item) =>
+            item.claim ||
+            item.source ||
+            "Agricultural evidence"
+        ),
+
+      evidenceSummary:
+        evidence.length > 0
+          ? "Recommendation supported by the available agricultural evidence."
+          : "No sufficient evidence was available.",
+
+      source:
+        evidence[0]?.source ||
+        "AGRI Agent",
+
+      actions:
+        actions.map(
+          (item) =>
+            item.action ||
+            "Follow the recommended agricultural practice."
+        ),
+
+      verifierStatus:
+        result.verification?.status ||
+        "unknown",
+
+      escalation:
+        decision.escalate === true ||
+        result.needsEscalation === true,
+    });
+
+    setWorkflowComplete(true);
+
+  } catch (error) {
+    console.error(
+      "AGRI Agent workflow error:",
+      error
+    );
+
+    setDecisionResult({
+      confidence: 0,
+
+      what: "Analysis failed",
+
+      whatDescription:
+        error.message ||
+        "Unable to connect to AGRI Agent.",
+
+      candidates: [],
+
+      why:
+        "Please make sure the AGRI Agent API is running.",
+
+      evidence: [],
+
+      evidenceSummary:
+        "No result was received.",
+
+      source: "AGRI Agent",
+
+      actions: [
+        "Check that the AGRI Agent API is running on port 5000.",
+        "Try the analysis again.",
+      ],
+
+      verifierStatus: "error",
+
+      escalation: true,
+    });
+
+    setWorkflowComplete(true);
+
+  } finally {
+    setIsProcessing(false);
+    setActiveAgent(-1);
+  }
+};
 
   // ============================================================
   // QUESTION SUBMIT
@@ -390,7 +622,7 @@ function App() {
 
     setCurrentPage("home");
 
-    runAgentWorkflow();
+   runAgentWorkflow(trimmedQuestion);
   };
 
   // ============================================================
@@ -800,7 +1032,7 @@ function App() {
 
             <div className="water-value">
               <h3>
-                {farmData.soilMoisture || "—"}
+                {farmData.soilMoisture || "â€”"}
               </h3>
 
               <span>Moisture</span>
@@ -884,7 +1116,7 @@ function App() {
           <div className="health-content">
             <div className="health-main">
               <div className="health-circle">
-                <strong>—</strong>
+                <strong>â€”</strong>
 
                 <span>Health</span>
               </div>
@@ -1450,10 +1682,10 @@ function App() {
                   >
                     <div className="agent-step-icon">
                       {isCompleted
-                        ? "✓"
+                        ? "âœ“"
                         : isActive
-                        ? "⟳"
-                        : "○"}
+                        ? "âŸ³"
+                        : "â—‹"}
                     </div>
 
                     <div>
@@ -1500,7 +1732,7 @@ function App() {
                   color: "#6c956c",
                 }}
               >
-                ✓ Analysis workflow completed
+                âœ“ Analysis workflow completed
               </div>
             )}
           </div>
@@ -1509,7 +1741,7 @@ function App() {
 
           <div className="quick-access">
             <h3>
-              <span className="bolt">ϟ</span>
+              <span className="bolt">ÏŸ</span>
               Quick Access
             </h3>
 
@@ -1554,11 +1786,11 @@ function App() {
             </div>
 
             <p>
-              “Healthy soil,
+              â€œHealthy soil,
               <br />
               healthy crops,
               <br />
-              a better tomorrow.”
+              a better tomorrow.â€
             </p>
 
             <div className="quote-line"></div>
@@ -1599,7 +1831,7 @@ function App() {
               <div className="decision-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    🔍
+                    ðŸ”
                   </span>
 
                   <strong>What?</strong>
@@ -1630,7 +1862,7 @@ function App() {
               <div className="decision-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    💡
+                    ðŸ’¡
                   </span>
 
                   <strong>Why?</strong>
@@ -1644,7 +1876,7 @@ function App() {
                   {decisionResult.evidence?.map(
                     (item) => (
                       <span key={item}>
-                        ✓ {item}
+                        âœ“ {item}
                       </span>
                     )
                   )}
@@ -1654,7 +1886,7 @@ function App() {
               <div className="decision-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    📚
+                    ðŸ“š
                   </span>
 
                   <strong>Evidence</strong>
@@ -1676,7 +1908,7 @@ function App() {
               <div className="decision-card action-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    ✓
+                    âœ“
                   </span>
 
                   <strong>
@@ -1699,7 +1931,7 @@ function App() {
             <div className="decision-footer">
               <div className="decision-status">
                 <span className="status-check">
-                  ✓
+                  âœ“
                 </span>
 
                 <div>
@@ -1714,7 +1946,7 @@ function App() {
               </div>
 
               <div className="escalation-status">
-                <span>⚠</span>
+                <span>âš </span>
 
                 <span>
                   {decisionResult.escalation}
@@ -1748,7 +1980,7 @@ function App() {
                 setSelectedHistory(null)
               }
             >
-              ← Back to History
+              â† Back to History
             </button>
 
             <section className="history-detail-header">
@@ -1760,7 +1992,7 @@ function App() {
                 <h2>{selectedHistory.title}</h2>
 
                 <p>
-                  {selectedHistory.date} •{" "}
+                  {selectedHistory.date} â€¢{" "}
                   {selectedHistory.crop}
                 </p>
               </div>
@@ -1848,7 +2080,7 @@ function App() {
                     className="history-agent-item"
                   >
                     <div className="history-agent-check">
-                      ✓
+                      âœ“
                     </div>
 
                     <div>
@@ -2066,7 +2298,7 @@ function App() {
                           <h3>{item.title}</h3>
 
                           <span>
-                            {item.crop} •{" "}
+                            {item.crop} â€¢{" "}
                             {item.date}
                           </span>
                         </div>
@@ -2559,7 +2791,7 @@ function App() {
                       }
                       aria-label="Clear guide search"
                     >
-                      ×
+                      Ã—
                     </button>
                   )}
                 </div>
@@ -2793,7 +3025,7 @@ function App() {
                     setSelectedGuide(null)
                   }
                 >
-                  ← Back to Guides
+                  â† Back to Guides
                 </button>
 
                 <div className="guide-detail-card">
@@ -2928,7 +3160,7 @@ function App() {
                       setSelectedGuide(null)
                     }
                   >
-                    ← Back to Guides
+                    â† Back to Guides
                   </button>
 
                 </div>
@@ -2946,7 +3178,7 @@ function App() {
 
         <footer>
           <span>
-            AGRI Agent • Farmer Decision Support
+            AGRI Agent â€¢ Farmer Decision Support
           </span>
         </footer>
 
@@ -3008,3 +3240,5 @@ function QuickItem({
 }
 
 export default App;
+
+

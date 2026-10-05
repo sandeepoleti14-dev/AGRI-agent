@@ -1,12 +1,17 @@
-import { GoogleGenAI } from "@google/genai";
+﻿import { GoogleGenAI } from "@google/genai";
 
 import { verifyRecommendation } from "../verifier/verifier.js";
+import {
+  runRole2Analysis,
+  runRole3Analysis,
+} from "../tools/toolAdapter.js";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
 const MODEL = "gemini-3.5-flash-lite";
+
 async function generateText(systemInstruction, userPrompt) {
   const response = await ai.models.generateContent({
     model: MODEL,
@@ -72,12 +77,47 @@ Important rules:
   };
 }
 
+/**
+ * Role 2 performs the combined Vision + RAG analysis.
+ */
 export async function visionAgentNode(state) {
-  if (!state.visionDetection) {
-    return { status: "vision_skipped" };
-  }
+  try {
+    const result = await runRole2Analysis({
+      image_path: state.visionDetection?.image_path || null,
+      crop: state.farmerProfile?.crop || null,
+      language: "English",
+      query: state.farmerPrompt,
+    });
 
-  return { status: "vision_completed" };
+    if (!result) {
+      return {
+        status: "vision_failed",
+        errors: ["Role 2 returned no result."],
+      };
+    }
+
+    const visionDetection = {
+      crop: result.crop,
+      possible_disease: result.disease,
+      confidence: result.confidence,
+      observations: result.observations || [],
+    };
+
+    const ragEvidence = Array.isArray(result.evidence)
+      ? result.evidence
+      : [];
+
+    return {
+      visionDetection,
+      ragEvidence,
+      status: "role2_completed",
+    };
+  } catch (error) {
+    return {
+      status: "vision_failed",
+      errors: [`Role 2 analysis failed: ${error.message}`],
+    };
+  }
 }
 
 export async function weatherAgentNode(state) {
@@ -99,59 +139,104 @@ export async function ragAgentNode(state) {
   return { status: "rag_completed" };
 }
 
+/**
+ * Real Role 3 Decision Agent.
+ *
+ * Role 2 provides disease candidates and RAG evidence.
+ * Role 3 combines them with weather and farmer profile.
+ */
 export async function decisionAgentNode(state) {
-  const response = await generateText(
-    `
-You are the Decision Agent of AGRI Agent.
+  try {
+    const diseaseName =
+      state.visionDetection?.possible_disease ||
+      "Uncertain";
 
-You provide a cautious, evidence-based agricultural
-recommendation.
+    const confidence =
+      Number(state.visionDetection?.confidence) || 0;
 
-Use ONLY information present in the supplied state.
+    const observations =
+      Array.isArray(state.visionDetection?.observations)
+        ? state.visionDetection.observations
+        : [];
 
-Available information:
-
-- Farmer question
-- Farmer profile
-- Vision result
-- Weather data
-- Agricultural knowledge evidence
-
-Rules:
-
-1. Do not invent facts.
-2. Do not invent sources.
-3. Do not invent weather conditions.
-4. Do not claim certainty when evidence is insufficient.
-5. Clearly distinguish observations from conclusions.
-6. If evidence is insufficient, recommend obtaining
-   additional information.
-7. Prefer safe, practical agricultural actions.
-8. For chemical treatment recommendations, avoid
-   unsupported dosage instructions.
-9. If the case may require an agricultural expert,
-   clearly say so.
-
-Return a concise recommendation that can be shown
-to a farmer.
-    `,
-    JSON.stringify(
+    const candidates = [
       {
-        farmerPrompt: state.farmerPrompt,
-        farmerProfile: state.farmerProfile,
-        visionDetection: state.visionDetection,
-        weatherData: state.weatherData,
-        ragEvidence: state.ragEvidence,
+        name: diseaseName,
+        confidence_pct:
+          confidence <= 1
+            ? confidence * 100
+            : confidence,
+        visual_evidence:
+          observations.length > 0
+            ? observations.join("; ")
+            : "No visual observations available.",
       },
-      null,
-      2
-    )
-  );
+    ];
 
-  return {
-    decision: response,
-    status: "decision_completed",
-  };
+    const ragChunks = Array.isArray(state.ragEvidence)
+      ? state.ragEvidence
+      : [];
+
+    const placeName =
+      state.farmerProfile?.place_name || null;
+
+    const lat =
+      state.farmerProfile?.lat ?? null;
+
+    const lon =
+      state.farmerProfile?.lon ?? null;
+
+    const role3Result = await runRole3Analysis({
+      farmer_id:
+        state.farmerProfile?.id ?? null,
+
+      farmer_name:
+        state.farmerProfile?.name ?? null,
+
+      password:
+        state.farmerProfile?.password ?? null,
+
+      place_name: placeName,
+
+      lat,
+      lon,
+
+      candidates,
+      rag_chunks: ragChunks,
+    });
+
+    if (!role3Result) {
+      return {
+        status: "decision_failed",
+        errors: ["Role 3 returned no result."],
+      };
+    }
+
+    return {
+      farmerProfile:
+        role3Result.farmer_profile ||
+        state.farmerProfile ||
+        null,
+
+      weatherData:
+        role3Result.weather ||
+        state.weatherData ||
+        null,
+
+      decision:
+        role3Result.decision ||
+        null,
+
+      status: "decision_completed",
+    };
+  } catch (error) {
+    return {
+      status: "decision_failed",
+      errors: [
+        `Role 3 decision failed: ${error.message}`,
+      ],
+    };
+  }
 }
 
 export async function verifierNode(state) {
