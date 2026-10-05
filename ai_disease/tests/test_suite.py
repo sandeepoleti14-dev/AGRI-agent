@@ -30,6 +30,25 @@ def test_vision_without_model_does_not_infer_from_filename_or_green_pixels(
     assert any("no disease prediction was produced" in item.lower() for item in result["observations"])
 
 
+def test_vision_api_failure_is_reported_without_fabricating_a_score(
+    tmp_path, monkeypatch
+):
+    image_path = tmp_path / "leaf.jpg"
+    _write_green_test_image(image_path)
+    vision = DiseaseVision(api_key="test-key")
+    monkeypatch.setattr(
+        vision,
+        "_call_gemini_vision",
+        lambda _image_path: (None, "HTTP 404"),
+    )
+
+    result = vision.analyze_image(str(image_path), crop="paddy")
+
+    assert result["possible_disease"] == "uncertain"
+    assert result["confidence"] is None
+    assert "HTTP 404" in result["observations"][0]
+
+
 def test_text_query_uses_query_retrieval_without_fixed_prediction_or_score(monkeypatch):
     captured = {}
 
