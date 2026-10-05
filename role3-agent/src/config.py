@@ -12,7 +12,7 @@ load_dotenv()
 # ── Paths ─────────────────────────────────────────────────────────────────
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
-DB_PATH = str(DATA_DIR / "farmers.db")
+DB_PATH = os.getenv("FARMERS_DB_PATH", str(DATA_DIR / "farmers.db"))
 CHROMA_DIR = str(DATA_DIR / "chroma_db")
 RAW_DOCS_DIR = str(DATA_DIR / "raw_docs")
 

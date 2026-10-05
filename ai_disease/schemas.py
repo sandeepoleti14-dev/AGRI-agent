@@ -13,7 +13,7 @@ class VisionResult(BaseModel):
     """Output schema from the vision analysis component."""
     crop: str = Field(default="paddy", description="Identified or provided crop type")
     possible_disease: str = Field(..., description="Predicted disease name or 'uncertain' / 'healthy'")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score between 0.0 and 1.0")
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Model confidence score, when available")
     observations: List[str] = Field(default_factory=list, description="Visual observations and morphological traits")
 
 
@@ -41,7 +41,7 @@ class DiseaseAnalysisResult(BaseModel):
     """
     crop: str = Field(default="paddy", description="Target crop")
     disease: str = Field(..., description="Identified disease name or 'Healthy' or 'Uncertain'")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Diagnosis confidence score")
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Diagnosis confidence score, when available")
     observations: List[str] = Field(default_factory=list, description="Visual observations from image analysis")
     symptoms: List[str] = Field(default_factory=list, description="Validated symptoms from agricultural corpus")
     organic_management: List[str] = Field(default_factory=list, description="Cultural, biological, and organic practices")
@@ -56,7 +56,7 @@ class DiseaseAnalysisResult(BaseModel):
         return {
             "crop": self.crop,
             "disease": self.disease,
-            "confidence": round(self.confidence, 2),
+            "confidence": round(self.confidence, 2) if self.confidence is not None else None,
             "observations": self.observations,
             "symptoms": self.symptoms,
             "organic_management": self.organic_management,

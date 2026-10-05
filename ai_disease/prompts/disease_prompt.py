@@ -6,12 +6,12 @@ Enforces strict grounding, zero-hallucination of chemicals/doses, and explicit u
 from typing import Dict, Any, List
 
 SYSTEM_PROMPT = """You are an expert Agricultural Plant Pathologist and Integrated Pest Management (IPM) specialist.
-Your responsibility is to analyze crop leaf vision observations alongside authoritative RAG agricultural evidence from ICAR, IRRI, and state agricultural university manuals.
+Your responsibility is to analyze the available crop observations alongside authoritative RAG agricultural evidence from ICAR, IRRI, and state agricultural university manuals.
 
 STRICT OPERATIONAL RULES:
 1. EVIDENCE GROUNDING: You MUST base all diagnostic symptoms, cultural methods, organic remedies, and chemical recommendations SOLELY on the provided retrieved evidence.
 2. ZERO PESTICIDE HALLUCINATION: Never invent, extrapolate, or recommend any chemical, pesticide, fungicide brand, or dosage not explicitly mentioned in the retrieved evidence chunks.
-3. UNCERTAINTY & ADVISORY NOTICE: Always distinguish automated computer vision prediction from laboratory confirmation. Emphasize that visual diagnosis is a preliminary screening.
+3. UNCERTAINTY & ADVISORY NOTICE: Distinguish farmer-reported symptoms from computer-vision observations. Never claim that an image was classified if the vision result is unavailable. Any visual diagnosis is preliminary, not laboratory confirmation.
 4. MANDATORY VERIFICATION: Always advise the farmer to consult local district agricultural extension officers (Krishi Vigyan Kendra / KVK) before purchasing or spraying any chemicals.
 5. NO UNSUPPORTED CLAIMS: Never call any pesticide company or commercial brand 'top rated' or 'best' unless authentic evidence explicitly states so.
 6. MULTILINGUAL FIDELITY: If the user requested language is other than English (such as Telugu or Hindi), provide symptoms, observations, organic management, and warnings in that language, while keeping chemical active ingredients recognizable.
@@ -46,30 +46,54 @@ def build_disease_prompt(
         evidence_text = "[No matching evidence found in knowledge base]"
     else:
         for i, item in enumerate(retrieved_evidence, 1):
-            source = item.get("source", "Official Bulletin")
-            score = item.get("score", 0.0)
+            source = item.get("source") or "Not available"
+            score = item.get("score")
             content = item.get("content", "").strip()
-            evidence_text += f"\n--- Evidence Chunk {i} (Source: {source}, Relevance: {score}) ---\n{content}\n"
+            relevance = score if score is not None else "Not available"
+            evidence_text += f"\n--- Evidence Chunk {i} (Source: {source}, Relevance: {relevance}) ---\n{content}\n"
 
     observations_text = "\n".join(f"- {obs}" for obs in vision_result.get("observations", []))
+    input_mode = vision_result.get("input_mode", "image")
+    if input_mode == "text":
+        analysis_label = "FARMER-REPORTED SYMPTOMS (NO IMAGE PROVIDED)"
+        confidence_text = "Not available; do not invent a confidence score."
+        mode_instruction = (
+            "Analyze only the farmer-reported symptoms and retrieved evidence. "
+            "Do not claim visual observations. Set confidence to null."
+        )
+    elif input_mode == "image_and_text":
+        analysis_label = "IMAGE RESULT AND FARMER-REPORTED SYMPTOMS"
+        confidence_text = vision_result.get("confidence")
+        mode_instruction = (
+            "Keep image observations separate from farmer-reported symptoms. "
+            "If no vision prediction or score is available, do not invent one; set confidence to null."
+        )
+    else:
+        analysis_label = "VISION ANALYSIS"
+        confidence_text = vision_result.get("confidence")
+        mode_instruction = (
+            "If no vision prediction or score is available, do not infer a disease from image quality or filename; "
+            "state uncertainty and set confidence to null."
+        )
 
     prompt = f"""
 CROP: {crop}
 LANGUAGE REQUESTED: {language}
 
-VISION ANALYSIS:
+{analysis_label}:
 - Possible Disease: {vision_result.get('possible_disease', 'uncertain')}
-- Confidence: {vision_result.get('confidence', 0.0)}
-- Visual Observations:
+- Confidence: {confidence_text}
+- Observations:
 {observations_text}
 
 RETRIEVED AUTHORITATIVE AGRICULTURAL EVIDENCE:
 {evidence_text}
 
 INSTRUCTIONS:
-1. Cross-reference the visual observations with the retrieved agricultural evidence.
-2. If evidence is insufficient, state "{INSUFFICIENT_EVIDENCE_MESSAGES.get(language, INSUFFICIENT_EVIDENCE_MESSAGES['English'])}".
-3. Synthesize the validated symptoms, cultural prevention, organic/biological management, and chemical interventions.
-4. Output strictly in the requested target language ({language}).
+1. {mode_instruction}
+2. Cross-reference the available observations with the retrieved agricultural evidence.
+3. If evidence is insufficient, state "{INSUFFICIENT_EVIDENCE_MESSAGES.get(language, INSUFFICIENT_EVIDENCE_MESSAGES['English'])}".
+4. Synthesize only validated symptoms, cultural prevention, organic/biological management, and chemical interventions.
+5. Output strictly in the requested target language ({language}).
 """
     return prompt.strip()

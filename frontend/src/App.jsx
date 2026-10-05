@@ -31,6 +31,12 @@ import {
   Wind,
   Globe,
   LogOut,
+  ArrowLeft,
+  BrainCircuit,
+  Eye,
+  BookOpenText,
+  Bot,
+  ShieldCheck,
 } from "lucide-react";
 
 import "./App.css";
@@ -38,26 +44,49 @@ import "./App.css";
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+function readStoredFarmer() {
+  const storedProfile =
+    sessionStorage.getItem("agri_farmer_profile") ||
+    localStorage.getItem("agri_farmer_profile");
+
+  if (!storedProfile) {
+    return null;
+  }
+
+  try {
+    const farmer = JSON.parse(storedProfile);
+    return farmer && farmer.id != null && farmer.name
+      ? farmer
+      : null;
+  } catch (error) {
+    console.warn("Saved farmer profile is invalid:", error);
+    localStorage.removeItem("agri_farmer_profile");
+    sessionStorage.removeItem("agri_farmer_profile");
+    return null;
+  }
+}
+
 function App() {
   // ============================================================
   // LOGIN STATE
   // ============================================================
 
+  const [registeredAccount, setRegisteredAccount] =
+    useState(readStoredFarmer);
+
   const [showLogin, setShowLogin] = useState(
-    localStorage.getItem("agri_logged_in") !== "true"
+    () => !readStoredFarmer()
   );
 
   const [showRegister, setShowRegister] = useState(false);
 
   const [farmerId, setFarmerId] = useState(
-    localStorage.getItem("agri_farmer_id") || ""
+    () => readStoredFarmer()?.id || ""
   );
 
   const [question, setQuestion] = useState("");
   const [submittedQuestion, setSubmittedQuestion] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const [registeredAccount, setRegisteredAccount] = useState(null);
 
   const [currentPage, setCurrentPage] = useState("home");
 
@@ -210,6 +239,7 @@ function App() {
 
   const fileInputRef = useRef(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadError, setUploadError] = useState("");
 
   // ============================================================
   // AGENT WORKFLOW STATE
@@ -218,101 +248,151 @@ function App() {
   const [activeAgent, setActiveAgent] = useState(-1);
   const [completedAgents, setCompletedAgents] = useState([]);
   const [workflowComplete, setWorkflowComplete] = useState(false);
+  const [workflowError, setWorkflowError] = useState(false);
 
   const [decisionResult, setDecisionResult] = useState(null);
+
+  const normalizeConfidence = (value, isFraction = false) => {
+    if (value == null || value === "") {
+      return null;
+    }
+
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+      return null;
+    }
+
+    const percent = isFraction
+      ? numericValue * 100
+      : numericValue;
+    return Math.min(Math.max(percent, 0), 100);
+  };
+
+  const readImageAsDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Unable to read selected image."));
+      reader.readAsDataURL(file);
+    });
 
   const agentSteps = [
     {
       name: "Master Agent",
       description: "Understanding your request",
+      icon: BrainCircuit,
     },
     {
       name: "Vision Agent",
       description: "Analyzing crop image",
+      icon: Eye,
     },
     {
       name: "Weather Agent",
       description: "Checking weather conditions",
+      icon: CloudSun,
     },
     {
       name: "RAG Knowledge",
       description: "Searching trusted sources",
+      icon: BookOpenText,
     },
     {
       name: "Decision Agent",
       description: "Combining the evidence",
+      icon: Bot,
     },
     {
       name: "Verifier",
       description: "Checking recommendation",
+      icon: ShieldCheck,
     },
   ];
 
   // ============================================================
   // FARM DATA
   // ============================================================
-const farmData = {
-  farmerName:
-    registeredAccount?.name || farmerId || "Farmer",
+  const farmData = {
+    farmerName:
+      registeredAccount?.name || farmerId || "Farmer",
 
-  farmerId:
-    farmerId || "Not available",
+    farmerId:
+      farmerId || "Not available",
 
-  region:
-    registeredAccount?.region ||
-    decisionResult?.region ||
-    "Avadi",
+    region:
+      registeredAccount?.place_name ||
+      decisionResult?.region ||
+      "Not available",
 
-  crop:
-    registeredAccount?.crop ||
-    decisionResult?.crop ||
-    "Tomato",
+    crop:
+      registeredAccount?.crop ||
+      decisionResult?.crop ||
+      "Not available",
 
-  farmStatus:
-    decisionResult
-      ? "Analysis available"
-      : "Awaiting analysis",
+    farmStatus:
+      decisionResult
+        ? "Analysis available"
+        : "Awaiting analysis",
 
-  season: "Current season",
+    season: "Not available",
 
-  growthStage: "Not available",
+    growthStage:
+      registeredAccount?.growth_stage ||
+      decisionResult?.growthStage ||
+      "Not available",
 
-  cropHealth:
-    decisionResult?.what ||
-    "Awaiting analysis",
+    cropHealth:
+      decisionResult?.what ||
+      "Not available",
 
-  soilCondition: "Not available",
+    soilCondition:
+      registeredAccount?.soil_type ||
+      decisionResult?.soilCondition ||
+      "Not available",
 
-  soilMoisture: null,
+    soilMoisture: "Not available",
 
-  lastSoilCheck: "Not available",
+    lastSoilCheck: "Not available",
+    plantingDate:
+      registeredAccount?.planting_date || "Not available",
+    pincode:
+      registeredAccount?.pincode || "Not available",
 
-  temperature:
-    decisionResult?.weather?.current?.temperature_c != null
-      ? `${decisionResult.weather.current.temperature_c}Â°C`
-      : "Not available",
+    temperature:
+      decisionResult?.weather?.current?.temperature_c != null
+        ? `${decisionResult.weather.current.temperature_c}°C`
+        : "Not available",
 
-  humidity:
-    decisionResult?.weather?.current?.humidity_pct != null
-      ? `${decisionResult.weather.current.humidity_pct}%`
-      : "Not available",
+    humidity:
+      decisionResult?.weather?.current?.humidity_pct != null
+        ? `${decisionResult.weather.current.humidity_pct}%`
+        : "Not available",
 
-  rainfall:
-    decisionResult?.weather?.current?.precipitation_mm != null
-      ? `${decisionResult.weather.current.precipitation_mm} mm`
-      : "Not available",
+    rainfall:
+      decisionResult?.weather?.current?.precipitation_mm != null
+        ? `${decisionResult.weather.current.precipitation_mm} mm`
+        : "Not available",
 
-  wind: "Not available",
+    wind:
+      decisionResult?.weather?.current?.wind_speed_10m != null
+        ? `${decisionResult.weather.current.wind_speed_10m} km/h`
+        : "Not available",
 
-  lastAnalysis:
-    decisionResult
+    weatherStatus:
+      decisionResult?.weather?.status === "ok"
+        ? "Current conditions"
+        : "Not available",
+
+    lastAnalysis: decisionResult
       ? "Latest analysis available"
       : "No analysis yet",
 
-  recentDiagnosis:
-    decisionResult?.what ||
-    "No crop analysis available yet",
-};
+    recentDiagnosis:
+      decisionResult?.what ||
+      "No crop analysis available yet",
+  };
 
   // ============================================================
   // LOGIN
@@ -321,11 +401,32 @@ const farmData = {
   if (showLogin) {
     return (
       <Login
-        onLogin={(id) => {
-          localStorage.setItem("agri_logged_in", "true");
-          localStorage.setItem("agri_farmer_id", id);
+        onLogin={async (name, password, rememberMe) => {
+          const response = await fetch(
+            `${API_BASE_URL}/api/auth/login`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name, password }),
+            }
+          );
+          const data = await response.json();
+          if (!response.ok || data.status !== "success") {
+            throw new Error(data.error || "Unable to sign in.");
+          }
 
-          setFarmerId(id);
+          const farmer = data.farmer;
+          const storage = rememberMe ? localStorage : sessionStorage;
+          localStorage.removeItem("agri_farmer_profile");
+          sessionStorage.removeItem("agri_farmer_profile");
+          storage.setItem(
+            "agri_farmer_profile",
+            JSON.stringify(farmer)
+          );
+          localStorage.removeItem("agri_logged_in");
+          localStorage.removeItem("agri_farmer_id");
+          setRegisteredAccount(farmer);
+          setFarmerId(farmer.id);
           setShowLogin(false);
           setShowRegister(false);
           setCurrentPage("home");
@@ -349,15 +450,33 @@ const farmData = {
           setShowRegister(false);
           setShowLogin(true);
         }}
-        onAccountCreated={(account) => {
-          setRegisteredAccount(account);
+        onAccountCreated={async (account) => {
+          const response = await fetch(
+            `${API_BASE_URL}/api/auth/register`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(account),
+            }
+          );
+          const data = await response.json();
+          if (!response.ok || data.status !== "success") {
+            throw new Error(
+              data.error || "Unable to create the farmer account."
+            );
+          }
 
-          setFarmerId(account.farmerId);
-
+          const farmer = data.farmer;
+          localStorage.setItem(
+            "agri_farmer_profile",
+            JSON.stringify(farmer)
+          );
+          sessionStorage.removeItem("agri_farmer_profile");
+          setRegisteredAccount(farmer);
+          setFarmerId(farmer.id);
           setShowRegister(false);
-          setShowLogin(true);
-
-          console.log("New farmer account created:", account);
+          setShowLogin(false);
+          setCurrentPage("home");
         }}
       />
     );
@@ -386,6 +505,8 @@ const farmData = {
   const handleLogout = () => {
     localStorage.removeItem("agri_logged_in");
     localStorage.removeItem("agri_farmer_id");
+    localStorage.removeItem("agri_farmer_profile");
+    sessionStorage.removeItem("agri_farmer_profile");
 
     setFarmerId("");
     setRegisteredAccount(null);
@@ -399,209 +520,279 @@ const farmData = {
   // ============================================================
 
   const runAgentWorkflow = async (currentQuestion) => {
-  setIsProcessing(true);
-  setWorkflowComplete(false);
-  setCompletedAgents([]);
-  setActiveAgent(0);
-  setDecisionResult(null);
+    setIsProcessing(true);
+    setWorkflowComplete(false);
+    setWorkflowError(false);
+    setCompletedAgents([]);
+    setActiveAgent(0);
+    setDecisionResult(null);
 
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/analyze`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          farmerPrompt:
-            currentQuestion ||
-            question ||
-            "Please analyze my crop.",
+    try {
+      const questionText =
+        currentQuestion ||
+        question ||
+        "Please analyze my crop.";
 
-          farmerProfile: {
-            name:
-              registeredAccount?.name ||
-              farmerId ||
-              "Farmer",
+      let visionDetection = null;
 
-            // Only send a numeric farmer ID.
-            id:
-              /^\d+$/.test(String(farmerId))
-                ? Number(farmerId)
-                : null,
+      if (selectedImage?.file) {
+        const imageDataUrl = await readImageAsDataUrl(
+          selectedImage.file
+        );
 
-            crop:
-              registeredAccount?.crop ||
-              null,
-
-            place_name:
-              registeredAccount?.region ||
-              null,
-          },
-
-          // Image upload will be connected separately.
-          // For this first end-to-end test, text analysis is enough.
-          visionDetection: null,
-
-          weatherData: null,
-
-          ragEvidence: [],
-        }),
+        visionDetection = {
+          fileName: selectedImage.name,
+          mimeType: selectedImage.file.type || "image/jpeg",
+          dataUrl: imageDataUrl,
+        };
       }
-    );
 
-    const data = await response.json();
+      const response = await fetch(
+        `${API_BASE_URL}/api/analyze`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            farmerPrompt: questionText,
+            farmerProfile: registeredAccount || null,
 
-    if (!response.ok || data.status !== "success") {
-      throw new Error(
-        data.error ||
-          "AGRI Agent analysis failed."
+            visionDetection,
+            weatherData: null,
+            ragEvidence: [],
+          }),
+        }
       );
+
+      const data = await response.json();
+
+      if (!response.ok || data.status !== "success") {
+        throw new Error(
+          data.error ||
+            "AGRI Agent analysis failed."
+        );
+      }
+
+      const result = data.result || {};
+      if (result.farmerProfile) {
+        setRegisteredAccount(result.farmerProfile);
+        const storage = sessionStorage.getItem("agri_farmer_profile")
+          ? sessionStorage
+          : localStorage;
+        storage.setItem(
+          "agri_farmer_profile",
+          JSON.stringify(result.farmerProfile)
+        );
+      }
+      if (!result.decision || !result.verification) {
+        throw new Error(
+          "The agent workflow did not return a verified decision."
+        );
+      }
+      if (Array.isArray(result.errors) && result.errors.length > 0) {
+        throw new Error(result.errors.join(" "));
+      }
+      const decision = result.decision || {};
+      const candidates =
+        Array.isArray(decision.candidates)
+          ? decision.candidates
+          : [];
+      const topCandidate = candidates[0] || {};
+      const evidence =
+        Array.isArray(decision.evidence)
+          ? decision.evidence
+          : [];
+      const actions =
+        Array.isArray(decision.actions)
+          ? decision.actions
+          : [];
+      const visionResult = result.visionDetection || {};
+      const verification = result.verification || {};
+      const weatherValue = result.weatherData || null;
+      const role2Confidence = normalizeConfidence(
+        visionResult.confidence,
+        true
+      );
+      const confidenceValue =
+        role2Confidence == null
+          ? null
+          : normalizeConfidence(decision.confidence_score) ??
+            role2Confidence;
+      const getEvidenceText = (item) => {
+        if (typeof item === "string") return item.trim();
+        if (!item || typeof item !== "object") return "";
+        return (
+          [
+            item.claim,
+            item.content,
+            item.text,
+            item.title,
+            item.source,
+          ].find(
+            (value) =>
+              typeof value === "string" && value.trim()
+          ) || ""
+        );
+      };
+      const decisionEvidence = evidence
+        .map(getEvidenceText)
+        .filter(Boolean);
+      const ragEvidence = Array.isArray(result.ragEvidence)
+        ? result.ragEvidence.map(getEvidenceText).filter(Boolean)
+        : [];
+      const availableEvidence =
+        decisionEvidence.length > 0
+          ? decisionEvidence
+          : ragEvidence;
+      const evidenceSource =
+        evidence.find(
+          (item) =>
+            item &&
+            typeof item === "object" &&
+            (item.source || item.title)
+        )?.source ||
+        evidence.find(
+          (item) =>
+            item &&
+            typeof item === "object" &&
+            item.title
+        )?.title ||
+        (Array.isArray(result.ragEvidence)
+          ? result.ragEvidence.find(
+              (item) =>
+                item &&
+                typeof item === "object" &&
+                (item.source || item.title)
+            )?.source ||
+            result.ragEvidence.find(
+              (item) =>
+                item &&
+                typeof item === "object" &&
+                item.title
+            )?.title
+          : null);
+      const selectedAgents = result.selectedAgents || [];
+      const finishedAgents = [0];
+      if (selectedAgents.includes("vision")) finishedAgents.push(1);
+      if (result.weatherData) finishedAgents.push(2);
+      if (
+        selectedAgents.includes("rag") ||
+        selectedAgents.includes("vision")
+      ) {
+        finishedAgents.push(3);
+      }
+      if (result.decision) finishedAgents.push(4);
+      if (result.verification) finishedAgents.push(5);
+
+      setCompletedAgents(finishedAgents);
+      setActiveAgent(-1);
+
+      setDecisionResult({
+        confidence:
+          confidenceValue == null
+            ? "Not available"
+            : `${confidenceValue}%`,
+        crop:
+          visionResult.crop ||
+          result.farmerProfile?.crop ||
+          registeredAccount?.crop ||
+          "Not available",
+        region:
+          result.farmerProfile?.place_name ||
+          registeredAccount?.place_name ||
+          "Not available",
+        weather: weatherValue,
+        what:
+          topCandidate.name ||
+          visionResult.possible_disease ||
+          "Uncertain",
+        whatDescription:
+          topCandidate.visual_evidence ||
+          visionResult.observations?.join("; ") ||
+          "More crop evidence is required.",
+        candidates:
+          candidates.length > 0
+            ? candidates.map(
+                (candidate) =>
+                  `${candidate.name} (${
+                    normalizeConfidence(candidate.confidence_pct) == null
+                      ? "Not available"
+                      : `${normalizeConfidence(candidate.confidence_pct)}%`
+                  })`
+              )
+            : [],
+        why:
+          decision.caveats?.[0] ||
+          verification.reason ||
+          "The system needs additional evidence to confirm the issue.",
+        evidence:
+          availableEvidence.length > 0
+            ? availableEvidence
+            : ["Not available"],
+        evidenceSummary:
+          availableEvidence.length > 0
+            ? "Evidence returned by the agent workflow."
+            : "Evidence is not available from the current analysis.",
+        source: evidenceSource || "Not available",
+        actions:
+          actions.length > 0
+            ? actions.map(
+                (item) =>
+                  item.action ||
+                  "Follow the recommended agricultural practice."
+              )
+            : ["No recommended actions are available."],
+        verifierStatus:
+          verification.status ||
+          "unknown",
+        escalation:
+          decision.escalate === true ||
+          result.needsEscalation === true,
+        growthStage:
+          result.farmerProfile?.growth_stage ||
+          "Not available",
+        soilCondition:
+          result.farmerProfile?.soil_type ||
+          "Not available",
+      });
+
+      setWorkflowComplete(true);
+    } catch (error) {
+      console.error(
+        "AGRI Agent workflow error:",
+        error
+      );
+
+      setDecisionResult({
+        confidence: "Not available",
+        what: "Analysis failed",
+        whatDescription:
+          error.message ||
+          "Unable to connect to AGRI Agent.",
+        candidates: [],
+        why:
+          "Please make sure the AGRI Agent API is running.",
+        evidence: [
+          "No evidence available from the current analysis.",
+        ],
+        evidenceSummary:
+          "No result was received.",
+        source: "AGRI Agent",
+        actions: [
+          "Check that the AGRI Agent API is running on port 5000.",
+          "Try the analysis again.",
+        ],
+        verifierStatus: "error",
+        escalation: true,
+      });
+
+      setWorkflowError(true);
+    } finally {
+      setIsProcessing(false);
+      setActiveAgent(-1);
     }
-
-    const result = data.result || {};
-
-    console.log("REAL AGRI API RESULT:", result);
-    const decision = result.decision || {};
-
-    const candidates =
-      Array.isArray(decision.candidates)
-        ? decision.candidates
-        : [];
-
-    const topCandidate =
-      candidates[0] || {};
-
-    const evidence =
-      Array.isArray(decision.evidence)
-        ? decision.evidence
-        : [];
-
-    const actions =
-      Array.isArray(decision.actions)
-        ? decision.actions
-        : [];
-
-    setCompletedAgents([
-      0, 1, 2, 3, 4, 5
-    ]);
-
-    setActiveAgent(-1);
-
-    setDecisionResult({
-      confidence:
-        Number(decision.confidence_score) || 0,
-
-      crop:
-        result.visionDetection?.crop ||
-        registeredAccount?.crop ||
-        "Tomato",
-
-      region:
-        registeredAccount?.region ||
-        "Avadi",
-
-      weather:
-        result.weatherData || null,
-
-      what:
-        topCandidate.name ||
-        "Uncertain",
-
-      whatDescription:
-        topCandidate.visual_evidence ||
-        "More crop evidence is required.",
-
-      candidates:
-        candidates.map(
-          (candidate) =>
-            `${candidate.name} (${candidate.confidence_pct}%)`
-        ),
-
-      why:
-        topCandidate.visual_evidence ||
-        "The system needs additional evidence to confirm the issue.",
-
-      evidence:
-        evidence.map(
-          (item) =>
-            item.claim ||
-            item.source ||
-            "Agricultural evidence"
-        ),
-
-      evidenceSummary:
-        evidence.length > 0
-          ? "Recommendation supported by the available agricultural evidence."
-          : "No sufficient evidence was available.",
-
-      source:
-        evidence[0]?.source ||
-        "AGRI Agent",
-
-      actions:
-        actions.map(
-          (item) =>
-            item.action ||
-            "Follow the recommended agricultural practice."
-        ),
-
-      verifierStatus:
-        result.verification?.status ||
-        "unknown",
-
-      escalation:
-        decision.escalate === true ||
-        result.needsEscalation === true,
-    });
-
-    setWorkflowComplete(true);
-
-  } catch (error) {
-    console.error(
-      "AGRI Agent workflow error:",
-      error
-    );
-
-    setDecisionResult({
-      confidence: 0,
-
-      what: "Analysis failed",
-
-      whatDescription:
-        error.message ||
-        "Unable to connect to AGRI Agent.",
-
-      candidates: [],
-
-      why:
-        "Please make sure the AGRI Agent API is running.",
-
-      evidence: [],
-
-      evidenceSummary:
-        "No result was received.",
-
-      source: "AGRI Agent",
-
-      actions: [
-        "Check that the AGRI Agent API is running on port 5000.",
-        "Try the analysis again.",
-      ],
-
-      verifierStatus: "error",
-
-      escalation: true,
-    });
-
-    setWorkflowComplete(true);
-
-  } finally {
-    setIsProcessing(false);
-    setActiveAgent(-1);
-  }
-};
+  };
 
   // ============================================================
   // QUESTION SUBMIT
@@ -636,10 +827,19 @@ const farmData = {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setUploadError("Choose a JPG, PNG, or WebP image.");
+      event.target.value = "";
       return;
     }
 
+    if (file.size > 8 * 1024 * 1024) {
+      setUploadError("Images must be 8 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    setUploadError("");
     if (selectedImage?.url) {
       URL.revokeObjectURL(selectedImage.url);
     }
@@ -652,7 +852,6 @@ const farmData = {
       name: file.name,
     });
 
-    console.log("Selected crop image:", file);
   };
 
   // ============================================================
@@ -745,7 +944,9 @@ const farmData = {
         </div>
 
         <div className="farmer-details">
-          <strong>{farmerId || "Farmer"}</strong>
+          <strong>
+            {registeredAccount?.name || farmerId || "Farmer"}
+          </strong>
         </div>
       </div>
     </aside>
@@ -767,7 +968,11 @@ const farmData = {
 
           <div>
             <strong>Weather</strong>
-            <span>Awaiting live data</span>
+            <span>
+              {decisionResult?.weather?.current?.temperature_c != null
+                ? `${decisionResult.weather.current.temperature_c}°C`
+                : "Not available"}
+            </span>
           </div>
         </div>
 
@@ -846,8 +1051,8 @@ const farmData = {
               </span>
 
               <h3>
-                {farmData.crop === "Not set"
-                  ? "Farm"
+                {farmData.crop === "Not available"
+                  ? "Farm Overview"
                   : `${farmData.crop} Farm`}
               </h3>
 
@@ -919,8 +1124,17 @@ const farmData = {
                 <CalendarDays size={16} />
 
                 <div>
-                  <span>Season</span>
-                  <strong>{farmData.season}</strong>
+                  <span>Planting Date</span>
+                  <strong>{farmData.plantingDate}</strong>
+                </div>
+              </div>
+
+              <div className="profile-detail-item">
+                <MapPin size={16} />
+
+                <div>
+                  <span>Pincode</span>
+                  <strong>{farmData.pincode}</strong>
                 </div>
               </div>
             </div>
@@ -943,7 +1157,7 @@ const farmData = {
 
               <div className="mini-status">
                 <Activity size={14} />
-                Awaiting data
+                {farmData.cropHealth}
               </div>
             </div>
 
@@ -984,7 +1198,7 @@ const farmData = {
             <h3>Soil, Water & Weather</h3>
           </div>
 
-          <p>Live readings will appear here</p>
+          <p>{farmData.weatherStatus}</p>
         </section>
 
         <section className="farm-condition-grid">
@@ -1004,8 +1218,8 @@ const farmData = {
             <h3>{farmData.soilCondition}</h3>
 
             <p>
-              Soil information will appear here
-              when live farm data is connected.
+              Soil type is taken from your farmer profile.
+              Live soil measurements are not available.
             </p>
 
             <div className="condition-footer">
@@ -1032,7 +1246,7 @@ const farmData = {
 
             <div className="water-value">
               <h3>
-                {farmData.soilMoisture || "â€”"}
+                {farmData.soilMoisture}
               </h3>
 
               <span>Moisture</span>
@@ -1042,14 +1256,17 @@ const farmData = {
               <div
                 className="moisture-fill"
                 style={{
-                  width: farmData.soilMoisture || "0%",
+                  width:
+                    farmData.soilMoisture === "Not available"
+                      ? "0%"
+                      : farmData.soilMoisture,
                 }}
               ></div>
             </div>
 
             <p>
-              Live soil moisture information
-              will appear after backend integration.
+              Soil moisture is not available from the
+              current farm data source.
             </p>
           </div>
 
@@ -1109,14 +1326,14 @@ const farmData = {
             <div className="health-badge">
               <Activity size={15} />
 
-              Awaiting analysis
+              {farmData.cropHealth}
             </div>
           </div>
 
           <div className="health-content">
             <div className="health-main">
               <div className="health-circle">
-                <strong>â€”</strong>
+                <strong>N/A</strong>
 
                 <span>Health</span>
               </div>
@@ -1127,9 +1344,9 @@ const farmData = {
                 </h4>
 
                 <p>
-                  Once the real analysis workflow is
-                  connected, the latest crop result
-                  will appear here.
+                  This is the latest decision-support result;
+                  health measurements are not available unless
+                  provided by the farm data source.
                 </p>
               </div>
             </div>
@@ -1346,10 +1563,16 @@ const farmData = {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/png, image/jpeg"
+              accept="image/png, image/jpeg, image/webp"
               style={{ display: "none" }}
               onChange={handleImageUpload}
             />
+
+            {uploadError && (
+              <div className="upload-error" role="alert">
+                {uploadError}
+              </div>
+            )}
 
             {/* SELECTED IMAGE PREVIEW */}
 
@@ -1681,11 +1904,16 @@ const farmData = {
                     }`}
                   >
                     <div className="agent-step-icon">
-                      {isCompleted
-                        ? "âœ“"
-                        : isActive
-                        ? "âŸ³"
-                        : "â—‹"}
+                      {isCompleted ? (
+                        <CheckCircle2 size={15} />
+                      ) : isActive ? (
+                        <RefreshCw
+                          size={15}
+                          className="refresh-spinning"
+                        />
+                      ) : (
+                        <span aria-hidden="true">·</span>
+                      )}
                     </div>
 
                     <div>
@@ -1703,7 +1931,8 @@ const farmData = {
             </div>
 
             {!isProcessing &&
-              !workflowComplete && (
+              !workflowComplete &&
+              !workflowError && (
                 <div
                   style={{
                     marginTop: "12px",
@@ -1732,7 +1961,13 @@ const farmData = {
                   color: "#6c956c",
                 }}
               >
-                âœ“ Analysis workflow completed
+                <CheckCircle2 size={14} /> Analysis workflow completed
+              </div>
+            )}
+
+            {workflowError && (
+              <div className="workflow-error" role="alert">
+                Analysis could not be completed.
               </div>
             )}
           </div>
@@ -1741,7 +1976,7 @@ const farmData = {
 
           <div className="quick-access">
             <h3>
-              <span className="bolt">ÏŸ</span>
+              <span className="bolt"><Activity size={15} /></span>
               Quick Access
             </h3>
 
@@ -1786,11 +2021,11 @@ const farmData = {
             </div>
 
             <p>
-              â€œHealthy soil,
+              "Healthy soil,
               <br />
               healthy crops,
               <br />
-              a better tomorrow.â€
+              a better tomorrow."
             </p>
 
             <div className="quote-line"></div>
@@ -1831,7 +2066,7 @@ const farmData = {
               <div className="decision-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    ðŸ”
+                    <Sprout size={15} />
                   </span>
 
                   <strong>What?</strong>
@@ -1849,8 +2084,8 @@ const farmData = {
                   0 && (
                   <div className="candidate-list">
                     {decisionResult.candidates.map(
-                      (candidate) => (
-                        <span key={candidate}>
+                      (candidate, index) => (
+                        <span key={`${candidate}-${index}`}>
                           {candidate}
                         </span>
                       )
@@ -1862,7 +2097,7 @@ const farmData = {
               <div className="decision-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    ðŸ’¡
+                    <Activity size={15} />
                   </span>
 
                   <strong>Why?</strong>
@@ -1874,9 +2109,9 @@ const farmData = {
 
                 <div className="evidence-row">
                   {decisionResult.evidence?.map(
-                    (item) => (
-                      <span key={item}>
-                        âœ“ {item}
+                    (item, index) => (
+                      <span key={`${item}-${index}`}>
+                        <CheckCircle2 size={13} /> {item}
                       </span>
                     )
                   )}
@@ -1886,7 +2121,7 @@ const farmData = {
               <div className="decision-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    ðŸ“š
+                    <BookOpen size={15} />
                   </span>
 
                   <strong>Evidence</strong>
@@ -1908,7 +2143,7 @@ const farmData = {
               <div className="decision-card action-card">
                 <div className="decision-card-title">
                   <span className="decision-icon">
-                    âœ“
+                    <CheckCircle2 size={15} />
                   </span>
 
                   <strong>
@@ -1931,7 +2166,7 @@ const farmData = {
             <div className="decision-footer">
               <div className="decision-status">
                 <span className="status-check">
-                  âœ“
+                  <CheckCircle2 size={15} />
                 </span>
 
                 <div>
@@ -1946,7 +2181,7 @@ const farmData = {
               </div>
 
               <div className="escalation-status">
-                <span>âš </span>
+                <span><AlertCircle size={15} /></span>
 
                 <span>
                   {decisionResult.escalation}
@@ -1980,7 +2215,7 @@ const farmData = {
                 setSelectedHistory(null)
               }
             >
-              â† Back to History
+              <ArrowLeft size={15} /> Back to History
             </button>
 
             <section className="history-detail-header">
@@ -1992,7 +2227,7 @@ const farmData = {
                 <h2>{selectedHistory.title}</h2>
 
                 <p>
-                  {selectedHistory.date} â€¢{" "}
+                  {selectedHistory.date} ·{" "}
                   {selectedHistory.crop}
                 </p>
               </div>
@@ -2080,7 +2315,7 @@ const farmData = {
                     className="history-agent-item"
                   >
                     <div className="history-agent-check">
-                      âœ“
+                      <CheckCircle2 size={15} />
                     </div>
 
                     <div>
@@ -2298,7 +2533,7 @@ const farmData = {
                           <h3>{item.title}</h3>
 
                           <span>
-                            {item.crop} â€¢{" "}
+                            {item.crop} ·{" "}
                             {item.date}
                           </span>
                         </div>
@@ -2791,7 +3026,7 @@ const farmData = {
                       }
                       aria-label="Clear guide search"
                     >
-                      Ã—
+                      <span aria-hidden="true">×</span>
                     </button>
                   )}
                 </div>
@@ -3025,7 +3260,7 @@ const farmData = {
                     setSelectedGuide(null)
                   }
                 >
-                  â† Back to Guides
+                  <ArrowLeft size={15} /> Back to Guides
                 </button>
 
                 <div className="guide-detail-card">
@@ -3160,7 +3395,7 @@ const farmData = {
                       setSelectedGuide(null)
                     }
                   >
-                    â† Back to Guides
+                    <ArrowLeft size={15} /> Back to Guides
                   </button>
 
                 </div>
@@ -3178,7 +3413,7 @@ const farmData = {
 
         <footer>
           <span>
-            AGRI Agent â€¢ Farmer Decision Support
+            AGRI Agent · Farmer Decision Support
           </span>
         </footer>
 
@@ -3240,5 +3475,3 @@ function QuickItem({
 }
 
 export default App;
-
-

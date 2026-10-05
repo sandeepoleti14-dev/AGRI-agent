@@ -4,7 +4,11 @@ from the planting date. No LLM involved — pure deterministic logic.
 """
 
 import sqlite3
+import hashlib
+import hmac
+import secrets
 from datetime import date, datetime
+from pathlib import Path
 from src.config import DB_PATH
 
 
@@ -29,6 +33,7 @@ DEFAULT_STAGES: list[tuple[int, str]] = [
     (0, "Germination"), (14, "Seedling"), (35, "Vegetative"),
     (60, "Flowering"), (90, "Maturity"),
 ]
+PASSWORD_HASH_ITERATIONS = 310_000
 
 
 def _compute_growth_stage(crop: str, planting_date_str: str) -> str:
@@ -50,7 +55,8 @@ def _compute_growth_stage(crop: str, planting_date_str: str) -> str:
 
 
 def _attach_growth_stage(profile: dict) -> dict:
-    profile.pop("password", None)   # never expose password outside auth
+    for credential_field in ("password", "password_hash", "password_salt"):
+        profile.pop(credential_field, None)
     profile["growth_stage"] = _compute_growth_stage(
         profile.get("crop", ""), profile.get("planting_date", "")
     )
@@ -87,9 +93,15 @@ def get_farmer_by_name(name: str, password: str) -> dict | None:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
+        cur.execute("PRAGMA table_info(farmers)")
+        columns = {row["name"] for row in cur.fetchall()}
+        if not columns:
+            conn.close()
+            return None
+
         cur.execute(
-            "SELECT * FROM farmers WHERE name = ? AND password = ?",
-            (name, password),
+            "SELECT * FROM farmers WHERE name = ? COLLATE NOCASE",
+            (name,),
         )
         row = cur.fetchone()
         conn.close()
@@ -99,4 +111,92 @@ def get_farmer_by_name(name: str, password: str) -> dict | None:
     if row is None:
         return None
 
-    return _attach_growth_stage(dict(row))
+    profile = dict(row)
+    stored_hash = profile.get("password_hash")
+    salt = profile.get("password_salt")
+
+    if stored_hash and salt:
+        supplied_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            bytes.fromhex(salt),
+            PASSWORD_HASH_ITERATIONS,
+        ).hex()
+        if not hmac.compare_digest(stored_hash, supplied_hash):
+            return None
+    elif "password" in columns and profile.get("password") == password:
+        pass
+    else:
+        return None
+
+    return _attach_growth_stage(profile)
+
+
+def register_farmer(
+    name: str,
+    password: str,
+    crop: str,
+    soil_type: str,
+    planting_date: str,
+    place_name: str,
+    pincode: str,
+) -> dict | None:
+    """Create a farmer record and return its public profile, or None if taken."""
+    Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+    salt = secrets.token_bytes(16)
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        PASSWORD_HASH_ITERATIONS,
+    ).hex()
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.row_factory = sqlite3.Row
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS farmers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                password_hash TEXT NOT NULL,
+                password_salt TEXT NOT NULL,
+                crop TEXT NOT NULL,
+                soil_type TEXT NOT NULL,
+                planting_date TEXT NOT NULL,
+                place_name TEXT NOT NULL,
+                pincode TEXT NOT NULL,
+                lat REAL,
+                lon REAL
+            )
+            """
+        )
+        try:
+            cursor = conn.execute(
+                """
+                INSERT INTO farmers (
+                    name, password_hash, password_salt, crop,
+                    soil_type, planting_date, place_name, pincode
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    name.strip(),
+                    password_hash,
+                    salt.hex(),
+                    crop,
+                    soil_type,
+                    planting_date,
+                    place_name.strip(),
+                    pincode,
+                ),
+            )
+        except sqlite3.IntegrityError:
+            conn.rollback()
+            return None
+
+        farmer_id = cursor.lastrowid
+        conn.commit()
+    finally:
+        conn.close()
+
+    return get_farmer_profile(farmer_id)

@@ -26,6 +26,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
   const [pincode, setPincode] = React.useState("");
 
   const [error, setError] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const soilOptions = [
     {
@@ -50,7 +51,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
     },
   ];
 
-  const handleRegister = (event) => {
+  const handleRegister = async (event) => {
     event.preventDefault();
 
     setError("");
@@ -84,17 +85,9 @@ function Register({ onBackToLogin, onAccountCreated }) {
       return;
     }
 
-    /*
-     * Temporary frontend registration.
-     *
-     * The real backend will later:
-     * 1. Receive these details.
-     * 2. Geocode the pincode.
-     * 3. Generate/store lat and lon.
-     * 4. Save the farmer profile in farmers.db.
-     */
-    if (onAccountCreated) {
-      onAccountCreated({
+    setIsSubmitting(true);
+    try {
+      await onAccountCreated({
         name: farmerName.trim(),
         password,
         crop,
@@ -103,6 +96,13 @@ function Register({ onBackToLogin, onAccountCreated }) {
         place_name: placeName.trim(),
         pincode: pincode.trim(),
       });
+    } catch (registrationError) {
+      setError(
+        registrationError.message ||
+          "Unable to create the farmer account."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -152,6 +152,8 @@ function Register({ onBackToLogin, onAccountCreated }) {
               type="text"
               placeholder="Enter your name"
               value={farmerName}
+              autoComplete="name"
+              required
               onChange={(event) =>
                 setFarmerName(event.target.value)
               }
@@ -168,6 +170,8 @@ function Register({ onBackToLogin, onAccountCreated }) {
               type="password"
               placeholder="Create a password"
               value={password}
+              autoComplete="new-password"
+              required
               onChange={(event) =>
                 setPassword(event.target.value)
               }
@@ -184,6 +188,8 @@ function Register({ onBackToLogin, onAccountCreated }) {
               type="password"
               placeholder="Confirm your password"
               value={confirmPassword}
+              autoComplete="new-password"
+              required
               onChange={(event) =>
                 setConfirmPassword(event.target.value)
               }
@@ -198,6 +204,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
 
             <select
               value={crop}
+              required
               onChange={(event) =>
                 setCrop(event.target.value)
               }
@@ -221,6 +228,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
 
             <select
               value={soilType}
+              required
               onChange={(event) =>
                 setSoilType(event.target.value)
               }
@@ -249,6 +257,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
             <input
               type="date"
               value={plantingDate}
+              required
               onChange={(event) =>
                 setPlantingDate(event.target.value)
               }
@@ -265,6 +274,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
               type="text"
               placeholder="Enter your village, town or city"
               value={placeName}
+              required
               onChange={(event) =>
                 setPlaceName(event.target.value)
               }
@@ -283,6 +293,7 @@ function Register({ onBackToLogin, onAccountCreated }) {
               maxLength={6}
               placeholder="Enter 6-digit pincode"
               value={pincode}
+              required
               onChange={(event) =>
                 setPincode(
                   event.target.value.replace(/\D/g, "")
@@ -310,8 +321,9 @@ function Register({ onBackToLogin, onAccountCreated }) {
           <button
             className="login-button"
             type="submit"
+            disabled={isSubmitting}
           >
-            Create Account
+          {isSubmitting ? "Creating account..." : "Create Account"}
             <ArrowRight size={18} />
           </button>
 

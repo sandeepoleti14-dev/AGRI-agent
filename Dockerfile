@@ -2,8 +2,11 @@ FROM node:20-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
     NODE_ENV=production \
+    VIRTUAL_ENV=/opt/venv \
     PYTHON_EXECUTABLE=python3 \
     PORT=5000
+
+ENV PATH="/opt/venv/bin:${PATH}"
 
 WORKDIR /app
 
@@ -15,8 +18,9 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./requirements.txt
-RUN python3 -m pip install --no-cache-dir --upgrade pip && \
-    python3 -m pip install --no-cache-dir -r requirements.txt
+RUN python3 -m venv "${VIRTUAL_ENV}" && \
+    python -m pip install --no-cache-dir --upgrade pip && \
+    python -m pip install --no-cache-dir -r requirements.txt
 
 COPY role1-agent-graph/package*.json ./role1-agent-graph/
 RUN npm ci --prefix role1-agent-graph

@@ -10,6 +10,8 @@ import json
 import urllib.request
 from typing import Dict, Any, List, Optional
 
+from pydantic import ValidationError
+
 from ..schemas import DiseaseAnalysisResult
 from ..prompts.disease_prompt import (
     SYSTEM_PROMPT,
@@ -350,14 +352,19 @@ class DiseaseAgent:
             return None
 
         prompt = build_disease_prompt(vision_result, retrieved_evidence, crop, language)
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={self.api_key}"
+        confidence = (
+            vision_result.get("confidence")
+            if vision_result.get("input_mode") != "text"
+            else None
+        )
 
         schema_instruction = (
             "You must return ONLY a valid JSON object matching this schema:\n"
             "{\n"
             '  "crop": "paddy",\n'
             '  "disease": "Disease Name or Healthy or Uncertain",\n'
-            '  "confidence": 0.87,\n'
+            f'  "confidence": {json.dumps(confidence)},\n'
             '  "observations": ["..."],\n'
             '  "symptoms": ["..."],\n'
             '  "organic_management": ["..."],\n'
@@ -388,12 +395,12 @@ class DiseaseAgent:
                 data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json"}
             )
-            with urllib.request.urlopen(req, timeout=12) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 text_content = data["candidates"][0]["content"]["parts"][0]["text"]
                 return json.loads(text_content)
-        except Exception as e:
-            print(f"Notice: Gemini Agent generation failed ({e}), using grounded rule synthesizer.")
+        except (OSError, TimeoutError, ValueError, KeyError, IndexError, TypeError) as e:
+            print(f"Gemini Agent generation failed ({type(e).__name__}); using the evidence-grounded fallback.")
             return None
 
     def _synthesize_grounded_response(
@@ -409,7 +416,11 @@ class DiseaseAgent:
         """
         crop_name = crop or vision_result.get("crop", "paddy")
         possible_disease = vision_result.get("possible_disease", "uncertain")
-        confidence = float(vision_result.get("confidence", 0.0))
+        raw_confidence = vision_result.get("confidence")
+        try:
+            confidence = float(raw_confidence) if raw_confidence is not None else None
+        except (TypeError, ValueError):
+            confidence = None
         observations = list(vision_result.get("observations", []))
 
         sources = list(dict.fromkeys(
@@ -426,21 +437,12 @@ class DiseaseAgent:
                     crop=crop_name,
                     disease="ఆరోగ్యకరమైన పైరు (Healthy Paddy)",
                     confidence=confidence,
-                    observations=[
-                        "పైరు ఆకులు ఏపుగా, సహజమైన ఆకుపచ్చ రంగులో ఉన్నాయి",
-                        "ఎటువంటి శిలీంద్ర లేదా బాక్టీరియల్ తెగులు మచ్చలు కనిపించలేదు"
-                    ],
+                    observations=observations,
                     symptoms=[],
-                    organic_management=[
-                        "సిఫార్సు చేసిన మోతాదులో మాత్రమే సమతుల్య నత్రజని, భాస్వరం, పొటాష్ ఎరువులు వేయండి",
-                        "పొలంలో నీటిని నిల్వ ఉంచకుండా ఆరుతడులు ఇవ్వండి",
-                        "పైరును క్రమం తప్పకుండా పర్యవేక్షించండి"
-                    ],
-                    chemical_management=[
-                        "ఆరోగ్యకరమైన పైరుకు ఎటువంటి రసాయన మందులు పిచికారీ చేయవలసిన అవసరం లేదు"
-                    ],
-                    evidence=["ICAR/IRRI crop standards: No foliar lesions or pathogen symptoms detected."],
-                    sources=sources or ["ICAR Crop Production Guide"],
+                    organic_management=[],
+                    chemical_management=[],
+                    evidence=evidence_snippets[:3],
+                    sources=sources,
                     warning=DISCLAIMER_TRANSLATIONS.get("Telugu", DISCLAIMER_TRANSLATIONS["English"]),
                     language=language
                 )
@@ -449,21 +451,12 @@ class DiseaseAgent:
                     crop=crop_name,
                     disease="स्वस्थ धान की फसल (Healthy Paddy)",
                     confidence=confidence,
-                    observations=[
-                        "धान की पत्तियां स्वस्थ और स्वाभाविक हरे रंग में हैं",
-                        "पत्तियों पर किसी भी कवक या जीवाणु जनित धब्बे के लक्षण नहीं हैं"
-                    ],
+                    observations=observations,
                     symptoms=[],
-                    organic_management=[
-                        "मिट्टी की जांच के अनुसार संतुलित मात्रा में एनपीके उर्वरकों का प्रयोग करें",
-                        "खेत में जल निकास की उचित व्यवस्था रखें",
-                        "नियमित रूप से फसल का निरीक्षण करते रहें"
-                    ],
-                    chemical_management=[
-                        "स्वस्थ फसल पर किसी भी प्रकार के रासायनिक छिड़काव की आवश्यकता नहीं है"
-                    ],
-                    evidence=["ICAR/IRRI crop standards: No foliar lesions or pathogen symptoms detected."],
-                    sources=sources or ["ICAR Crop Production Guide"],
+                    organic_management=[],
+                    chemical_management=[],
+                    evidence=evidence_snippets[:3],
+                    sources=sources,
                     warning=DISCLAIMER_TRANSLATIONS.get("Hindi", DISCLAIMER_TRANSLATIONS["English"]),
                     language=language
                 )
@@ -472,21 +465,12 @@ class DiseaseAgent:
                     crop=crop_name,
                     disease="ஆரோக்கியமான நெல் பயிர் (Healthy Paddy)",
                     confidence=confidence,
-                    observations=[
-                        "நெல் இலைகள் ஆரோக்கியமாகவும் இயல்பான பச்சை நிறத்தில் உள்ளன",
-                        "இலைகளில் எந்தவொரு பூஞ்சை அல்லது பாக்டீரியா நோய் அறிகுறிகளும் இல்லை"
-                    ],
+                    observations=observations,
                     symptoms=[],
-                    organic_management=[
-                        "மண்ணின் சோதனை அடிப்படையில் சமநிலை NPK உரங்களை பயன்படுத்தவும்",
-                        "நெல் வயலில் நீர் நிலையை கட்டுப்படுத்தவும்",
-                        "பயிர்களை முறையாக கண்காணிக்கவும்"
-                    ],
-                    chemical_management=[
-                        "ஆரோக்கியமான பயிருக்கு எந்தவொரு வேதியியல் மருந்துகளையும் பயன்படுத்த தேவையில்லை"
-                    ],
-                    evidence=["ICAR/IRRI crop standards: No foliar lesions or pathogen symptoms detected."],
-                    sources=sources or ["ICAR Crop Production Guide"],
+                    organic_management=[],
+                    chemical_management=[],
+                    evidence=evidence_snippets[:3],
+                    sources=sources,
                     warning=DISCLAIMER_TRANSLATIONS.get("Tamil", DISCLAIMER_TRANSLATIONS["English"]),
                     language=language
                 )
@@ -495,24 +479,22 @@ class DiseaseAgent:
                     crop=crop_name,
                     disease="Healthy",
                     confidence=confidence,
-                    observations=observations or ["Uniform green leaf blade with intact cell integrity", "No lesions detected"],
+                    observations=observations,
                     symptoms=[],
-                    organic_management=[
-                        "Maintain balanced NPK fertilization as per soil testing",
-                        "Adopt alternate wetting and drying (AWD) water management",
-                        "Conduct weekly field scouting during vegetative and tillering stages"
-                    ],
-                    chemical_management=[
-                        "No chemical application required for healthy crop"
-                    ],
-                    evidence=["ICAR/IRRI crop standards: No foliar lesions or pathogen symptoms detected."],
-                    sources=sources or ["ICAR Crop Production Guide"],
-                    warning="Crop foliage appears healthy. Continue routine monitoring and avoid excessive nitrogen application.",
+                    organic_management=[],
+                    chemical_management=[],
+                    evidence=evidence_snippets[:3],
+                    sources=sources,
+                    warning=DISCLAIMER_TRANSLATIONS["English"],
                     language=language
                 )
 
         # Case 2: Uncertain / Unclear / Unrelated image
-        if possible_disease.lower() in ["uncertain", "unknown", ""] or confidence < 0.40:
+        if (
+            possible_disease.lower() in ["uncertain", "unknown", ""]
+            or confidence is None
+            or confidence < 0.40
+        ):
             warning_msg = DISCLAIMER_TRANSLATIONS.get(language, DISCLAIMER_TRANSLATIONS["English"])
             upload_guidance = {
                 "English": "Please upload a clear, focused photograph of the affected crop part (leaf, fruit, stem, or branch).",
@@ -520,6 +502,11 @@ class DiseaseAgent:
                 "Hindi": "कृपया प्रभावित फसल के भाग (पत्ती, फल, तना या शाखा) की स्पष्ट, केंद्रित फोटो अपलोड करें।",
                 "Tamil": "தயவுசெய்து பாதிக்கப்பட்ட பயிரின் பகுதியின் (இலை, பழம், தண்டு அல்லது கிளை) தெளிவான, மையப்படுத்தப்பட்ட புகைப்படத்தை பதிவேற்றவும்."
             }
+            if vision_result.get("input_mode") in ["text", "image_and_text"]:
+                upload_guidance["English"] = (
+                    "The reported symptoms do not support a reliable diagnosis with the available evidence. "
+                    "Please provide more detail about the affected plant part and symptoms."
+                )
             disease_display = "Uncertain"
             if language == "Telugu":
                 disease_display = "అనిశ్చితం / గుర్తించబడలేదు (Uncertain)"
@@ -536,8 +523,8 @@ class DiseaseAgent:
                 symptoms=[],
                 organic_management=[],
                 chemical_management=[],
-                evidence=[],
-                sources=[],
+                evidence=evidence_snippets[:3],
+                sources=sources,
                 warning=f"{warning_msg} {upload_guidance.get(language, upload_guidance['English'])}",
                 language=language
             )
@@ -563,24 +550,6 @@ class DiseaseAgent:
         # Case 4: Evidence-backed Diagnosis
         warning_text = DISCLAIMER_TRANSLATIONS.get(language, DISCLAIMER_TRANSLATIONS["English"])
 
-        # Check for multilingual pre-translated data for target disease
-        if language in ["Telugu", "Hindi", "Tamil"] and possible_disease in DISEASE_MULTILINGUAL_DATA:
-            m_data = DISEASE_MULTILINGUAL_DATA[possible_disease].get(language)
-            if m_data:
-                return DiseaseAnalysisResult(
-                    crop=crop_name,
-                    disease=m_data["name"],
-                    confidence=confidence,
-                    observations=observations,
-                    symptoms=m_data["symptoms"],
-                    organic_management=m_data["organic"],
-                    chemical_management=m_data["chemical"],
-                    evidence=evidence_snippets[:3],
-                    sources=sources,
-                    warning=warning_text,
-                    language=language
-                )
-
         # English / General language synthesis from retrieved evidence
         symptoms = self._extract_evidence_points(retrieved_evidence, "symptoms")
         organic = self._extract_evidence_points(retrieved_evidence, "organic")
@@ -591,9 +560,9 @@ class DiseaseAgent:
             disease=possible_disease,
             confidence=confidence,
             observations=observations,
-            symptoms=symptoms[:4] if symptoms else ["Refer to attached evidence excerpt"],
-            organic_management=organic[:4] if organic else ["Maintain balanced fertilization and field sanitation"],
-            chemical_management=chemical[:4] if chemical else ["No verified chemical intervention in retrieved evidence"],
+            symptoms=symptoms[:4],
+            organic_management=organic[:4],
+            chemical_management=chemical[:4],
             evidence=evidence_snippets[:3],
             sources=sources,
             warning=warning_text,
@@ -612,16 +581,36 @@ class DiseaseAgent:
         Returns a dictionary conforming exactly to Phase 7 structured output schema.
         """
         # If API key configured, attempt LLM call
-        if self.api_key:
+        input_mode = vision_result.get("input_mode", "image")
+        raw_confidence = vision_result.get("confidence")
+        has_vision_prediction = (
+            vision_result.get("possible_disease", "uncertain").lower()
+            not in ["uncertain", "unknown", ""]
+            and raw_confidence is not None
+        )
+        model_warning = None
+        if self.api_key and (input_mode != "image" or has_vision_prediction):
             llm_result = self._call_gemini_agent(vision_result, retrieved_evidence, crop, language)
             if llm_result and "disease" in llm_result:
+                llm_result["confidence"] = (
+                    raw_confidence if input_mode != "text" else None
+                )
                 try:
                     res_obj = DiseaseAnalysisResult(**llm_result)
                     return res_obj.to_dict()
-                except Exception as val_err:
+                except ValidationError as val_err:
                     print(f"Warning: LLM output validation error ({val_err}), using grounded synthesizer.")
+                    if input_mode in ["text", "image_and_text"]:
+                        model_warning = "The disease language model returned an invalid response; no model-backed diagnosis was produced."
+            elif input_mode in ["text", "image_and_text"]:
+                model_warning = "The disease language model is unavailable; no model-backed diagnosis was produced."
+        elif input_mode in ["text", "image_and_text"]:
+            model_warning = "No disease language model is configured; no model-backed diagnosis was produced."
 
         # Grounded deterministic synthesizer
+        if model_warning:
+            observations = vision_result.setdefault("observations", [])
+            observations.append(model_warning)
         res_obj = self._synthesize_grounded_response(
             vision_result=vision_result,
             retrieved_evidence=retrieved_evidence,

@@ -11,31 +11,28 @@ import "./Login.css";
 function Login({ onLogin, onCreateAccount }) {
   const [farmerName, setFarmerName] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [rememberMe, setRememberMe] = React.useState(true);
+  const [error, setError] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
 
     const trimmedName = farmerName.trim();
 
     if (!trimmedName || !password) {
+      setError("Enter your farmer name and password.");
       return;
     }
 
-    /*
-     * Backend integration:
-     *
-     * The backend will use:
-     * get_farmer_by_name(name, password)
-     *
-     * and return the complete farmer profile:
-     * id, name, crop, soil_type, planting_date,
-     * place_name, pincode, lat, lon, growth_stage
-     *
-     * The password must never be stored or displayed
-     * after successful login.
-     */
-    if (onLogin) {
-      onLogin(trimmedName, password);
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await onLogin(trimmedName, password, rememberMe);
+    } catch (loginError) {
+      setError(loginError.message || "Unable to sign in.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -84,6 +81,8 @@ function Login({ onLogin, onCreateAccount }) {
               type="text"
               placeholder="Enter your name"
               value={farmerName}
+              autoComplete="username"
+              required
               onChange={(event) =>
                 setFarmerName(event.target.value)
               }
@@ -100,6 +99,8 @@ function Login({ onLogin, onCreateAccount }) {
               type="password"
               placeholder="Enter your password"
               value={password}
+              autoComplete="current-password"
+              required
               onChange={(event) =>
                 setPassword(event.target.value)
               }
@@ -110,7 +111,13 @@ function Login({ onLogin, onCreateAccount }) {
           <div className="login-options">
 
             <label className="remember">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(event) =>
+                  setRememberMe(event.target.checked)
+                }
+              />
               <span>Remember me</span>
             </label>
 
@@ -120,12 +127,19 @@ function Login({ onLogin, onCreateAccount }) {
 
           </div>
 
+          {error && (
+            <div className="login-error" role="alert">
+              {error}
+            </div>
+          )}
+
           {/* SIGN IN */}
           <button
             className="login-button"
             type="submit"
+            disabled={isSubmitting}
           >
-            Sign In
+            {isSubmitting ? "Signing in..." : "Sign In"}
             <ArrowRight size={18} />
           </button>
 

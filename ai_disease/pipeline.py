@@ -133,7 +133,7 @@ def analyze_crop(
         return DiseaseAnalysisResult(
             crop=crop_name,
             disease="Uncertain",
-            confidence=0.0,
+            confidence=None,
             observations=["Neither crop photograph nor text symptom query was provided"],
             symptoms=[],
             organic_management=[],
@@ -152,7 +152,7 @@ def analyze_crop(
             return DiseaseAnalysisResult(
                 crop=crop_name,
                 disease="Uncertain",
-                confidence=0.0,
+                confidence=None,
                 observations=[f"Image file not found: {image_path}"],
                 symptoms=[],
                 organic_management=[],
@@ -165,11 +165,12 @@ def analyze_crop(
 
         try:
             vision_result = vision_module.analyze_image(image_path=image_path, crop=crop_name)
-        except Exception as vision_err:
+            vision_result["input_mode"] = "image_and_text" if query else "image"
+        except (OSError, ValueError) as vision_err:
             return DiseaseAnalysisResult(
                 crop=crop_name,
                 disease="Uncertain",
-                confidence=0.0,
+                confidence=None,
                 observations=[f"Image analysis error: {str(vision_err)}"],
                 symptoms=[],
                 organic_management=[],
@@ -180,45 +181,41 @@ def analyze_crop(
                 language=output_language
             ).to_dict()
     else:
-        # Symptom text query without image
-        predicted_disease = "uncertain"
-        q_lower = query.lower()
-        if "blast" in q_lower or "spindle" in q_lower:
-            predicted_disease = "Rice Blast"
-        elif "sheath" in q_lower or "water line" in q_lower or "snake" in q_lower:
-            predicted_disease = "Sheath Blight"
-        elif "bacterial" in q_lower or "blight" in q_lower or "wavy" in q_lower or "ooze" in q_lower:
-            predicted_disease = "Bacterial Leaf Blight"
-        elif "brown spot" in q_lower or "sesame" in q_lower:
-            predicted_disease = "Brown Spot"
-        elif "smut" in q_lower or "spore ball" in q_lower or "velvety" in q_lower:
-            predicted_disease = "False Smut"
-        elif "healthy" in q_lower or "normal" in q_lower or "green" in q_lower:
-            predicted_disease = "Healthy"
-
         vision_result = {
             "crop": crop_name,
-            "possible_disease": predicted_disease,
-            "confidence": 0.75 if predicted_disease != "uncertain" else 0.20,
-            "observations": [f"Farmer symptom description: '{query}'"]
+            "possible_disease": "uncertain",
+            "confidence": None,
+            "input_mode": "text",
+            "observations": [f"Farmer-reported symptoms (not visually verified): {query}"]
         }
 
     possible_disease = vision_result.get("possible_disease", "uncertain")
-    confidence = float(vision_result.get("confidence", 0.0))
+    raw_confidence = vision_result.get("confidence")
+    try:
+        confidence = float(raw_confidence) if raw_confidence is not None else None
+    except (TypeError, ValueError):
+        confidence = None
 
     # Step 2: RAG Retrieval
-    # If crop is healthy or vision is uncertain, bypass disease retrieval
     retrieved_evidence = []
-    if possible_disease.lower() not in ["healthy", "uncertain", "unknown"] and confidence > 0.30:
-        retrieval_query = f"{possible_disease} " + " ".join(vision_result.get("observations", []))
+    has_disease_prediction = (
+        possible_disease.lower() not in ["healthy", "uncertain", "unknown"]
+        and confidence is not None
+        and confidence > 0.30
+    )
+    if has_disease_prediction or query:
+        query_parts = []
+        if has_disease_prediction:
+            query_parts.append(possible_disease)
+        query_parts.extend(vision_result.get("observations", []))
         if query:
-            retrieval_query += f" {query}"
+            query_parts.append(query)
 
         try:
             retrieved_evidence = retrieve_disease_information(
                 crop=crop_name,
-                disease=possible_disease,
-                query=retrieval_query,
+                disease=possible_disease if has_disease_prediction else None,
+                query=" ".join(query_parts),
                 top_k=8
             )
         except Exception as rag_err:

@@ -59,6 +59,7 @@ from src.tools.weather import (
 from src.tools.soil_crop import (
     get_farmer_profile,
     get_farmer_by_name,
+    register_farmer,
 )
 
 from src.agents.decision import (
@@ -123,6 +124,30 @@ def main():
 
     try:
         request = json.loads(raw_input)
+
+        action = request.get("action", "analyze")
+        if action == "login":
+            success_response(
+                get_farmer_by_name(
+                    request.get("name", ""),
+                    request.get("password", ""),
+                )
+            )
+            return
+
+        if action == "register":
+            success_response(
+                register_farmer(
+                    name=request.get("name", ""),
+                    password=request.get("password", ""),
+                    crop=request.get("crop", ""),
+                    soil_type=request.get("soil_type", ""),
+                    planting_date=request.get("planting_date", ""),
+                    place_name=request.get("place_name", ""),
+                    pincode=request.get("pincode", ""),
+                )
+            )
+            return
 
         result = {}
 

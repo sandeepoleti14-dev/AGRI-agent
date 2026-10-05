@@ -12,9 +12,10 @@ __pycache__
 .vscode
 .idea
 .DS_Store
-venv
-.venv
+**/.venv
+**/venv
 coverage
 *.log
+*.zip
 dist
 build

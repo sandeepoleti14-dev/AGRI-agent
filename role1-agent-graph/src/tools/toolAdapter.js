@@ -132,6 +132,14 @@ export async function runRole3Analysis(input) {
   );
 }
 
+export async function runRole3Auth(action, input) {
+  return callPythonBridge(
+    role3BridgePath,
+    { ...input, action },
+    "Role 3 bridge"
+  );
+}
+
 /**
  * Weather adapter
  */

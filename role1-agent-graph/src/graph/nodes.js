@@ -151,27 +151,35 @@ export async function decisionAgentNode(state) {
       state.visionDetection?.possible_disease ||
       "Uncertain";
 
+    const rawConfidence = state.visionDetection?.confidence;
     const confidence =
-      Number(state.visionDetection?.confidence) || 0;
+      rawConfidence === null || rawConfidence === undefined || rawConfidence === ""
+        ? null
+        : Number(rawConfidence);
 
     const observations =
       Array.isArray(state.visionDetection?.observations)
         ? state.visionDetection.observations
         : [];
 
-    const candidates = [
-      {
-        name: diseaseName,
-        confidence_pct:
-          confidence <= 1
-            ? confidence * 100
-            : confidence,
-        visual_evidence:
-          observations.length > 0
-            ? observations.join("; ")
-            : "No visual observations available.",
-      },
-    ];
+    const candidates =
+      confidence !== null &&
+      Number.isFinite(confidence) &&
+      !["uncertain", "unknown"].includes(diseaseName.toLowerCase())
+        ? [
+            {
+              name: diseaseName,
+              confidence_pct:
+                confidence <= 1
+                  ? confidence * 100
+                  : confidence,
+              visual_evidence:
+                observations.length > 0
+                  ? observations.join("; ")
+                  : "No visual observations available.",
+            },
+          ]
+        : [];
 
     const ragChunks = Array.isArray(state.ragEvidence)
       ? state.ragEvidence
