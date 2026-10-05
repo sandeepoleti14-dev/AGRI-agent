@@ -3,7 +3,7 @@
 import os
 import json
 import base64
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from PIL import Image, ImageStat, ImageFilter
 
 
@@ -88,12 +88,15 @@ class DiseaseVision:
             "observations": []
         }
 
-    def _call_gemini_vision(self, image_path: str) -> Optional[Dict[str, Any]]:
+    def _call_gemini_vision(
+        self, image_path: str
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         """Invokes Gemini 2.5 Flash Vision when an API key is configured."""
         if not self.api_key:
-            return None
+            return None, "not configured"
 
         try:
+            import urllib.error
             import urllib.request
             with open(image_path, "rb") as f:
                 b64_img = base64.b64encode(f.read()).decode("utf-8")
@@ -144,10 +147,11 @@ class DiseaseVision:
                 data = json.loads(resp.read().decode("utf-8"))
                 text_content = data["candidates"][0]["content"]["parts"][0]["text"]
                 parsed = json.loads(text_content)
-                return parsed
+                return parsed, None
         except (OSError, TimeoutError, ValueError, KeyError, IndexError, TypeError) as e:
-            print(f"Gemini Vision API call failed ({type(e).__name__}); no disease prediction was produced.")
-            return None
+            error_label = f"HTTP {e.code}" if hasattr(e, "code") else type(e).__name__
+            print(f"Gemini Vision API call failed ({error_label}); no disease prediction was produced.")
+            return None, error_label
 
     def analyze_image(self, image_path: str, crop: str = "paddy") -> Dict[str, Any]:
         """
@@ -177,7 +181,7 @@ class DiseaseVision:
                 "observations": quality.get("observations", ["Image quality is insufficient for disease identification"])
             }
 
-        gemini_res = self._call_gemini_vision(image_path)
+        gemini_res, model_error = self._call_gemini_vision(image_path)
         if gemini_res and "possible_disease" in gemini_res:
             raw_confidence = gemini_res.get("confidence")
             try:
@@ -200,8 +204,8 @@ class DiseaseVision:
 
         unavailable_reason = (
             "A vision model is not configured; no disease prediction was produced."
-            if not self.api_key
-            else "Vision analysis is unavailable; no disease prediction was produced."
+            if model_error == "not configured"
+            else f"Vision model request failed ({model_error or 'unknown error'}); no disease prediction was produced."
         )
         return {
             "crop": crop,
