@@ -1,3 +1,4 @@
+import { registerFarmerSupabase, loginFarmerSupabase } from "./src/tools/supabaseAuth.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -277,6 +278,7 @@ app.post("/api/analyze", async (req, res) => {
 });
 
 export default app;
+
 
 
 
