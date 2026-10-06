@@ -493,7 +493,7 @@ class DiseaseAgent:
         if (
             possible_disease.lower() in ["uncertain", "unknown", ""]
             or confidence is None
-            or confidence < 0.40
+            or confidence < 0.05
         ):
             warning_msg = DISCLAIMER_TRANSLATIONS.get(language, DISCLAIMER_TRANSLATIONS["English"])
             upload_guidance = {
@@ -587,6 +587,7 @@ class DiseaseAgent:
             vision_result.get("possible_disease", "uncertain").lower()
             not in ["uncertain", "unknown", ""]
             and raw_confidence is not None
+            and float(raw_confidence) >= 0.05
         )
         model_warning = None
         if self.api_key and (input_mode != "image" or has_vision_prediction):

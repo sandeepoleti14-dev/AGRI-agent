@@ -5,6 +5,7 @@ Encapsulates ChromaDB collection creation, persistent storage, and querying.
 
 import os
 from typing import List, Dict, Any, Optional
+
 import chromadb
 from chromadb.config import Settings
 
@@ -13,15 +14,46 @@ from ..ingestion.document_loader import DocumentLoader
 from ..ingestion.text_chunker import TextChunker
 
 
+CROP_BY_FILENAME = {
+    "rice": "paddy",
+    "paddy": "paddy",
+    "tomato": "tomato",
+    "tamato": "tomato",
+    "brinjal": "brinjal",
+    "eggplant": "brinjal",
+    "chilli": "chilli",
+    "chili": "chilli",
+    "okra": "okra",
+    "ladyfinger": "okra",
+    "ladies_finger": "okra",
+}
+
+
+def detect_crop_from_source(source: str) -> str:
+    """Detect crop from the agricultural document filename."""
+    filename = os.path.basename(source).lower()
+
+    for keyword, crop in CROP_BY_FILENAME.items():
+        if keyword in filename:
+            return crop
+
+    return "paddy"
+
+
 class ChromaStore:
-    """Manages the paddy_disease_knowledge ChromaDB collection."""
+    """Manages the agricultural disease knowledge ChromaDB collection."""
 
     COLLECTION_NAME = "paddy_disease_knowledge"
 
     def __init__(self, persist_dir: Optional[str] = None):
         if persist_dir is None:
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            persist_dir = os.path.join(base_dir, "data", "processed", "chroma_db")
+            persist_dir = os.path.join(
+                base_dir,
+                "data",
+                "processed",
+                "chroma_db"
+            )
 
         self.persist_dir = persist_dir
         os.makedirs(self.persist_dir, exist_ok=True)
@@ -30,40 +62,60 @@ class ChromaStore:
         self.loader = DocumentLoader()
         self.chunker = TextChunker()
 
-        # Initialize Chroma persistent client
         self.client = chromadb.PersistentClient(
             path=self.persist_dir,
             settings=Settings(anonymized_telemetry=False)
         )
+
         self.collection = self._get_or_create_collection()
 
     def _get_or_create_collection(self):
-        """Initializes or retrieves the dedicated paddy_disease_knowledge collection."""
+        """Initialize or retrieve the agricultural disease collection."""
         try:
             return self.client.get_or_create_collection(
                 name=self.COLLECTION_NAME,
-                metadata={"description": "ICAR/IRRI Verified Rice Disease Management Knowledge Base"}
+                metadata={
+                    "description": (
+                        "Verified agricultural disease management "
+                        "knowledge base"
+                    )
+                }
             )
+
         except Exception as e:
-            # If collection schema mismatch or corrupt, reset collection cleanly
             print(f"Notice: Resetting Chroma collection due to: {e}")
+
             try:
                 self.client.delete_collection(self.COLLECTION_NAME)
             except Exception:
                 pass
+
             return self.client.create_collection(
                 name=self.COLLECTION_NAME,
-                metadata={"description": "ICAR/IRRI Verified Rice Disease Management Knowledge Base"}
+                metadata={
+                    "description": (
+                        "Verified agricultural disease management "
+                        "knowledge base"
+                    )
+                }
             )
 
-    def create_embeddings(self, texts: List[str]) -> List[List[float]]:
-        """Delegates vector embedding computation."""
+    def create_embeddings(
+        self,
+        texts: List[str]
+    ) -> List[List[float]]:
+        """Delegate vector embedding computation."""
         return self.embedding_service.create_embeddings(texts)
 
-    def store_documents(self, chunks: List[Dict[str, Any]]) -> int:
+    def store_documents(
+        self,
+        chunks: List[Dict[str, Any]]
+    ) -> int:
         """
-        Stores structured chunks into the ChromaDB collection.
-        Returns the count of chunks added.
+        Store structured chunks into the ChromaDB collection.
+
+        Returns:
+            Number of chunks added.
         """
         if not chunks:
             return 0
@@ -77,13 +129,14 @@ class ChromaStore:
             text = chunk.get("text", "")
             meta = chunk.get("metadata", {})
 
-            # Chroma metadata values must be primitive types (str, int, float, bool)
+            # Chroma metadata values must be primitive types.
             clean_meta = {}
-            for k, v in meta.items():
-                if isinstance(v, (str, int, float, bool)):
-                    clean_meta[k] = v
+
+            for key, value in meta.items():
+                if isinstance(value, (str, int, float, bool)):
+                    clean_meta[key] = value
                 else:
-                    clean_meta[k] = str(v)
+                    clean_meta[key] = str(value)
 
             ids.append(chunk_id)
             documents.append(text)
@@ -91,62 +144,115 @@ class ChromaStore:
 
         embeddings = self.create_embeddings(documents)
 
-        # Upsert into ChromaDB
         self.collection.upsert(
             ids=ids,
             documents=documents,
             metadatas=metadatas,
             embeddings=embeddings
         )
+
         return len(ids)
 
-    def ingest_documents(self, pdf_dir: Optional[str] = None) -> int:
+    def ingest_documents(
+        self,
+        pdf_dir: Optional[str] = None
+    ) -> int:
         """
         Full ingestion pipeline:
-        PDF -> Text extraction -> Cleaning -> Chunking -> Metadata -> Embeddings -> ChromaDB
+
+        PDF
+          -> Text extraction
+          -> Cleaning
+          -> Crop detection
+          -> Chunking
+          -> Metadata
+          -> Embeddings
+          -> ChromaDB
         """
         if pdf_dir is None:
             base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            pdf_dir = os.path.join(base_dir, "data", "pdf")
+            pdf_dir = os.path.join(
+                base_dir,
+                "data",
+                "pdf"
+            )
 
         if not os.path.exists(pdf_dir):
-            raise FileNotFoundError(f"PDF directory does not exist: {pdf_dir}")
+            raise FileNotFoundError(
+                f"PDF directory does not exist: {pdf_dir}"
+            )
 
         docs = self.loader.load_directory(pdf_dir)
+
         if not docs:
-            print(f"Warning: No PDF documents found in {pdf_dir}")
+            print(
+                f"Warning: No PDF documents found in {pdf_dir}"
+            )
             return 0
 
         all_chunks = []
+
         for doc in docs:
-            chunks = self.chunker.chunk_document(doc, crop="paddy")
+            source = doc.get("source", "")
+            crop = detect_crop_from_source(source)
+
+            chunks = self.chunker.chunk_document(
+                doc,
+                crop=crop
+            )
+
             all_chunks.extend(chunks)
 
         count = self.store_documents(all_chunks)
-        print(f"Ingested {count} chunks into collection '{self.COLLECTION_NAME}'")
+
+        print(
+            f"Ingested {count} chunks into collection "
+            f"'{self.COLLECTION_NAME}'"
+        )
+
         return count
 
-    def search(self, query: str, where_filter: Optional[Dict[str, Any]] = None, n_results: int = 5) -> Dict[str, Any]:
-        """Performs semantic similarity search with optional metadata filtering."""
+    def search(
+        self,
+        query: str,
+        where_filter: Optional[Dict[str, Any]] = None,
+        n_results: int = 5
+    ) -> Dict[str, Any]:
+        """Perform semantic similarity search with optional metadata filtering."""
+
         query_vec = self.embedding_service.embed_query(query)
+
         kwargs = {
             "query_embeddings": [query_vec],
             "n_results": n_results,
-            "include": ["documents", "metadatas", "distances"]
+            "include": [
+                "documents",
+                "metadatas",
+                "distances"
+            ]
         }
+
         if where_filter:
             kwargs["where"] = where_filter
 
         try:
             return self.collection.query(**kwargs)
+
         except Exception as e:
-            # If where filter failed (e.g. no match for filter), fallback without filter
-            print(f"Query with filter failed ({e}), falling back to unconstrained query")
-            kwargs.pop("where", None)
-            return self.collection.query(**kwargs)
+            # Do NOT fall back to an unconstrained search.
+            # Cross-crop agricultural evidence must never leak
+            # into the result when a crop filter is requested.
+            print(f"Chroma query failed: {e}")
+
+            return {
+                "documents": [[]],
+                "metadatas": [[]],
+                "distances": [[]]
+            }
 
     def get_stats(self) -> Dict[str, Any]:
-        """Returns statistics about the vector store."""
+        """Return statistics about the vector store."""
+
         return {
             "collection_name": self.COLLECTION_NAME,
             "document_count": self.collection.count(),

@@ -1,11 +1,11 @@
 """
 Retrieval engine for agricultural disease knowledge.
-Supports multi-field filtering, semantic similarity search, and score normalization.
+Supports crop filtering, semantic similarity search, and score normalization.
 """
 
 from typing import List, Dict, Any, Optional
+
 from ..vectorstore.chroma_store import ChromaStore
-from ..schemas import RetrievalChunk
 
 
 SUPPORTED_CROP_ALIASES = {
@@ -21,8 +21,9 @@ SUPPORTED_CROP_ALIASES = {
     "ladies finger": "okra",
     "ladyfinger": "okra",
     "ladies_finger": "okra",
-    "lady_finger": "okra"
+    "lady_finger": "okra",
 }
+
 
 DISEASE_NAME_MAP = {
     "rice blast": "rice_blast",
@@ -40,138 +41,145 @@ DISEASE_NAME_MAP = {
     "sesame spot": "brown_spot",
     "false smut": "false_smut",
     "smut": "false_smut",
-    "ustilaginoidea": "false_smut"
+    "ustilaginoidea": "false_smut",
 }
 
 
 class DiseaseRetriever:
-    """Retrieves grounded agricultural knowledge from ChromaDB collection."""
+    """Retrieve agricultural disease knowledge from ChromaDB."""
 
-    def __init__(self, chroma_store: Optional[ChromaStore] = None):
-        self.store = chroma_store or ChromaStore()
+    def __init__(self, persist_dir: Optional[str] = None):
+        self.store = ChromaStore(persist_dir=persist_dir)
 
-    def normalize_disease_name(self, disease: Optional[str]) -> Optional[str]:
-        """Maps user or model disease names to canonical metadata keys."""
-        if not disease:
-            return None
-        cleaned = disease.strip().lower()
-        return DISEASE_NAME_MAP.get(cleaned, cleaned.replace(" ", "_"))
-
-    def normalize_crop_name(self, crop: Optional[str]) -> str:
-        """Normalizes crop names used in the multi-crop extension."""
+    @staticmethod
+    def normalize_crop_name(crop: Optional[str]) -> str:
         if not crop:
             return "paddy"
-        cleaned = crop.strip().lower().replace("-", " ").replace("_", " ")
-        return SUPPORTED_CROP_ALIASES.get(cleaned, cleaned)
+
+        normalized = crop.strip().lower()
+        return SUPPORTED_CROP_ALIASES.get(normalized, normalized)
+
+    @staticmethod
+    def normalize_disease_name(disease: Optional[str]) -> Optional[str]:
+        if not disease:
+            return None
+
+        normalized = disease.strip().lower()
+
+        if normalized in {"uncertain", "unknown", "healthy"}:
+            return normalized
+
+        return DISEASE_NAME_MAP.get(
+            normalized,
+            normalized.replace(" ", "_")
+        )
 
     def retrieve(
         self,
-        crop: str = "paddy",
+        query: str,
+        crop: Optional[str] = None,
         disease: Optional[str] = None,
-        query: str = "",
         category: Optional[str] = None,
-        top_k: int = 6,
-        min_score: float = 0.05
+        top_k: int = 5,
     ) -> List[Dict[str, Any]]:
-        """
-        Retrieves relevant agricultural documents matching the crop, disease, and query.
-        Returns a list of standardized dicts:
-        [
-            {
-                "content": "...",
-                "source": "...",
-                "metadata": {...},
-                "score": 0.91
-            }
-        ]
-        """
-        norm_disease = self.normalize_disease_name(disease)
+        """Retrieve evidence while keeping results restricted to the requested crop."""
+
         norm_crop = self.normalize_crop_name(crop)
+        norm_disease = self.normalize_disease_name(disease)
 
-        # Build search query string
-        search_terms = []
-        if norm_crop:
-            search_terms.append(norm_crop)
-        if disease and disease.lower() not in ["uncertain", "unknown", "healthy"]:
-            search_terms.append(disease)
-        if query:
-            search_terms.append(query)
+        search_query = query.strip() if query else ""
 
-        search_query = " ".join(search_terms) if search_terms else "paddy disease symptoms and management"
+        if not search_query:
+            search_query = norm_disease or norm_crop
 
-        # Build metadata where filter if specific disease is known
-        where_filter = None
-        filter_clauses = []
-        if norm_disease and norm_disease not in ["uncertain", "unknown", "healthy"]:
+        filter_clauses = [
+            {"crop": norm_crop}
+        ]
+
+        if (
+            norm_disease
+            and norm_disease not in {"uncertain", "unknown", "healthy"}
+        ):
             filter_clauses.append({"disease": norm_disease})
+
         if category:
             filter_clauses.append({"category": category})
 
         if len(filter_clauses) == 1:
             where_filter = filter_clauses[0]
-        elif len(filter_clauses) > 1:
+        else:
             where_filter = {"$and": filter_clauses}
 
-        # Query vector store
         raw_results = self.store.search(
             query=search_query,
             where_filter=where_filter,
-            n_results=top_k
+            n_results=top_k,
         )
 
-        formatted_results = []
-        docs = raw_results.get("documents", [[]])[0]
-        metas = raw_results.get("metadatas", [[]])[0]
-        distances = raw_results.get("distances", [[]])[0]
+        documents = raw_results.get("documents", [[]])
+        metadatas = raw_results.get("metadatas", [[]])
+        distances = raw_results.get("distances", [[]])
 
-        for doc_text, meta, dist in zip(docs, metas, distances):
-            # Chroma returns L2 or cosine distance. Normalize to [0.0, 1.0] score
-            # For cosine distance, distance is in [0, 2], so score = 1 - dist/2
-            score = max(0.0, min(1.0, 1.0 - (dist / 2.0))) if dist is not None else 1.0
+        documents = documents[0] if documents else []
+        metadatas = metadatas[0] if metadatas else []
+        distances = distances[0] if distances else []
 
-            if score < min_score:
-                continue
+        results = []
 
-            source = meta.get("source", "Agricultural Research Compendium") if meta else "Agricultural Research Compendium"
-            formatted_results.append({
-                "content": doc_text,
-                "source": source,
-                "metadata": meta or {},
-                "score": round(score, 3)
-            })
+        for index, document in enumerate(documents):
+            metadata = (
+                metadatas[index]
+                if index < len(metadatas)
+                else {}
+            )
 
-        # Sort by relevance score descending
-        formatted_results.sort(key=lambda x: x["score"], reverse=True)
-        return formatted_results
+            distance = (
+                distances[index]
+                if index < len(distances)
+                else None
+            )
 
+            results.append(
+                {
+                    "text": document,
+                    "metadata": metadata,
+                    "distance": distance,
+                    "score": self._normalize_score(distance),
+                }
+            )
 
-# Module-level convenience function meeting the specification
-_global_retriever: Optional[DiseaseRetriever] = None
+        return results
+
+    @staticmethod
+    def _normalize_score(distance: Optional[float]) -> Optional[float]:
+        if distance is None:
+            return None
+
+        try:
+            distance = float(distance)
+        except (TypeError, ValueError):
+            return None
+
+        # Chroma distance: lower is better.
+        # Convert it to a simple bounded similarity-style score.
+        return max(0.0, min(1.0, 1.0 / (1.0 + distance)))
 
 
 def retrieve_disease_information(
-    crop: str = "paddy",
+    query: str,
+    crop: Optional[str] = None,
     disease: Optional[str] = None,
-    query: str = "",
     category: Optional[str] = None,
-    top_k: int = 5
+    top_k: int = 5,
 ) -> List[Dict[str, Any]]:
-    """
-    Public retrieval API required by Phase 4:
-    retrieve_disease_information(
-        crop="paddy",
-        disease="sheath blight",
-        query="brown lesions near water level"
-    )
-    """
-    global _global_retriever
-    if _global_retriever is None:
-        _global_retriever = DiseaseRetriever()
+    """Convenience wrapper used by the main disease pipeline."""
 
-    return _global_retriever.retrieve(
+    retriever = DiseaseRetriever()
+
+    return retriever.retrieve(
+        query=query,
         crop=crop,
         disease=disease,
-        query=query,
         category=category,
-        top_k=top_k
+        top_k=top_k,
     )
