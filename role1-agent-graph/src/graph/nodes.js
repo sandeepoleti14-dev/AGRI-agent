@@ -1,9 +1,10 @@
-﻿import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 import { verifyRecommendation } from "../verifier/verifier.js";
 import {
   runRole2Analysis,
   runRole3Analysis,
+  runWeatherAgent,
 } from "../tools/toolAdapter.js";
 
 const ai = new GoogleGenAI({
@@ -121,11 +122,44 @@ export async function visionAgentNode(state) {
 }
 
 export async function weatherAgentNode(state) {
-  if (!state.weatherData) {
-    return { status: "weather_skipped" };
-  }
+  try {
+    if (state.weatherData) {
+      return { status: "weather_completed" };
+    }
 
-  return { status: "weather_completed" };
+    const profile = state.farmerProfile;
+
+    if (!profile) {
+      return {
+        status: "weather_skipped",
+        errors: ["Farmer profile is unavailable for weather lookup."],
+      };
+    }
+
+    const weatherData = await runWeatherAgent({
+      farmerProfile: profile,
+      place_name: profile.place_name || null,
+      lat: profile.lat ?? null,
+      lon: profile.lon ?? null,
+    });
+
+    if (!weatherData) {
+      return {
+        status: "weather_failed",
+        errors: ["Weather Agent returned no weather data."],
+      };
+    }
+
+    return {
+      weatherData,
+      status: "weather_completed",
+    };
+  } catch (error) {
+    return {
+      status: "weather_failed",
+      errors: [`Weather Agent failed: ${error.message}`],
+    };
+  }
 }
 
 export async function ragAgentNode(state) {
@@ -257,3 +291,5 @@ export async function verifierNode(state) {
     status: "verification_completed",
   };
 }
+
+

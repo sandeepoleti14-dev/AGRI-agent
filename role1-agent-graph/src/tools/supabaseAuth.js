@@ -93,3 +93,23 @@ export async function loginFarmerSupabase(name, password) {
 
   return cleanFarmer(data);
 }
+
+export async function getFarmerByIdSupabase(farmerId) {
+  const id = Number(farmerId);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("farmers")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Supabase farmer lookup failed: ${error.message}`);
+  }
+
+  return cleanFarmer(data);
+}

@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+import { useState, useRef } from "react";
 import Login from "./Login";
 import Register from "./Register";
 
@@ -362,7 +362,7 @@ function App() {
 
     temperature:
       decisionResult?.weather?.current?.temperature_c != null
-        ? `${decisionResult.weather.current.temperature_c}Â°C`
+        ? `${decisionResult.weather.current.temperature_c}°C`
         : "Not available",
 
     humidity:
@@ -783,7 +783,7 @@ function App() {
         ],
         evidenceSummary:
           "This is a low-confidence automated estimate, not a confirmed diagnosis.",
-        source: "Local Vision MVP — Demo Fallback",
+        source: "Local Vision MVP � Demo Fallback",
         actions: [
           "Inspect the yellowing pattern on older and newer leaves.",
           "Avoid chemical application based only on this result.",
@@ -976,7 +976,7 @@ function App() {
             <strong>Weather</strong>
             <span>
               {decisionResult?.weather?.current?.temperature_c != null
-                ? `${decisionResult.weather.current.temperature_c}Â°C`
+                ? `${decisionResult.weather.current.temperature_c}°C`
                 : "Not available"}
             </span>
           </div>
@@ -1918,7 +1918,7 @@ function App() {
                           className="refresh-spinning"
                         />
                       ) : (
-                        <span aria-hidden="true">Â·</span>
+                        <span aria-hidden="true">·</span>
                       )}
                     </div>
 
@@ -2089,13 +2089,7 @@ function App() {
                 {decisionResult.candidates?.length >
                   0 && (
                   <div className="candidate-list">
-                    {decisionResult.candidates.map(
-                      (candidate, index) => (
-                        <span key={`${candidate}-${index}`}>
-                          {candidate}
-                        </span>
-                      )
-                    )}
+                    {decisionResult.candidates.map((candidate, index) => (<span key={`${candidate.disease || candidate}-${index}`}>{typeof candidate === "object" ? `${candidate.disease} � ${candidate.confidence}` : candidate}</span>))}
                   </div>
                 )}
               </div>
@@ -2233,7 +2227,7 @@ function App() {
                 <h2>{selectedHistory.title}</h2>
 
                 <p>
-                  {selectedHistory.date} Â·{" "}
+                  {selectedHistory.date} ·{" "}
                   {selectedHistory.crop}
                 </p>
               </div>
@@ -2539,7 +2533,7 @@ function App() {
                           <h3>{item.title}</h3>
 
                           <span>
-                            {item.crop} Â·{" "}
+                            {item.crop} ·{" "}
                             {item.date}
                           </span>
                         </div>
@@ -3032,7 +3026,7 @@ function App() {
                       }
                       aria-label="Clear guide search"
                     >
-                      <span aria-hidden="true">Ã—</span>
+                      <span aria-hidden="true">×</span>
                     </button>
                   )}
                 </div>
@@ -3419,7 +3413,7 @@ function App() {
 
         <footer>
           <span>
-            AGRI Agent Â· Farmer Decision Support
+            AGRI Agent · Farmer Decision Support
           </span>
         </footer>
 
@@ -3481,4 +3475,5 @@ function QuickItem({
 }
 
 export default App;
+
 

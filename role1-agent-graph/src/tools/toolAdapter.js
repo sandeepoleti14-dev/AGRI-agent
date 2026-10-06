@@ -148,9 +148,102 @@ export async function runWeatherAgent(input) {
     return null;
   }
 
-  return runRole3Analysis(input);
-}
+  try {
+    let lat = input.lat ?? input.farmerProfile?.lat ?? null;
+    let lon = input.lon ?? input.farmerProfile?.lon ?? null;
 
+    if (lat == null || lon == null) {
+      const placeName =
+        input.place_name ||
+        input.farmerProfile?.place_name ||
+        "";
+
+      if (!placeName) {
+        return { status: "weather unavailable" };
+      }
+
+      const geocodeResponse = await fetch(
+        "https://nominatim.openstreetmap.org/search?" +
+          new URLSearchParams({
+            q: placeName,
+            format: "json",
+            limit: "1",
+          }),
+        {
+          headers: {
+            "User-Agent": "AGRI-Agent/1.0",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      if (!geocodeResponse.ok) {
+        return { status: "weather unavailable" };
+      }
+
+      const places = await geocodeResponse.json();
+
+      if (!places.length) {
+        return { status: "weather unavailable" };
+      }
+
+      lat = Number(places[0].lat);
+      lon = Number(places[0].lon);
+    }
+
+    const weatherResponse = await fetch(
+      "https://api.open-meteo.com/v1/forecast?" +
+        new URLSearchParams({
+          latitude: String(lat),
+          longitude: String(lon),
+          current:
+            "temperature_2m,relative_humidity_2m,precipitation,weather_code",
+          hourly:
+            "temperature_2m,relative_humidity_2m,precipitation_probability",
+          forecast_days: "3",
+          timezone: "auto",
+        })
+    );
+
+    if (!weatherResponse.ok) {
+      return { status: "weather unavailable" };
+    }
+
+    const data = await weatherResponse.json();
+    const current = data.current || {};
+    const hourly = data.hourly || {};
+
+    const humidity = hourly.relative_humidity_2m || [];
+    const rainProbability =
+      hourly.precipitation_probability || [];
+
+    return {
+      status: "ok",
+      current: {
+        temperature_c: current.temperature_2m ?? null,
+        humidity_pct: current.relative_humidity_2m ?? null,
+        precipitation_mm: current.precipitation ?? null,
+        weather_code: current.weather_code ?? null,
+      },
+      forecast_72h: {
+        max_humidity_pct: humidity.length
+          ? Math.max(...humidity)
+          : null,
+        max_rain_probability_pct: rainProbability.length
+          ? Math.max(...rainProbability)
+          : null,
+        hourly_humidity: humidity.slice(0, 72),
+        hourly_rain_probability:
+          rainProbability.slice(0, 72),
+      },
+    };
+  } catch (error) {
+    return {
+      status: "weather unavailable",
+      error: error.message,
+    };
+  }
+}
 /**
  * Combined tool interface
  */

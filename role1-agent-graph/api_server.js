@@ -1,4 +1,4 @@
-import { registerFarmerSupabase, loginFarmerSupabase } from "./src/tools/supabaseAuth.js";
+import { registerFarmerSupabase, loginFarmerSupabase, getFarmerByIdSupabase } from "./src/tools/supabaseAuth.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -223,11 +223,12 @@ app.post("/api/analyze", async (req, res) => {
     const savedImage = saveVisionImage(
       data.visionDetection || null
     );
+    const farmerProfile = data.farmerProfile || (data.farmerId ? await getFarmerByIdSupabase(data.farmerId) : null);
+
     const input = {
       farmerPrompt: farmerPrompt.trim(),
 
-      farmerProfile:
-        data.farmerProfile || null,
+      farmerProfile,
 
       visionDetection: savedImage.visionDetection,
 
