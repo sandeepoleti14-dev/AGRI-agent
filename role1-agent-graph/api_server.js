@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import fs from "fs";
@@ -132,10 +132,10 @@ app.post("/api/auth/login", async (req, res) => {
   }
 
   try {
-    const farmer = await runRole3Auth("login", {
-      name: name.trim(),
-      password,
-    });
+    const farmer = await loginFarmerSupabase(
+      name.trim(),
+      password
+    );
     if (!farmer) {
       return res.status(401).json({
         status: "error",
@@ -186,7 +186,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 
   try {
-    const farmer = await runRole3Auth("register", account);
+    const farmer = await registerFarmerSupabase(account);
     if (!farmer) {
       return res.status(409).json({
         status: "error",
@@ -277,3 +277,7 @@ app.post("/api/analyze", async (req, res) => {
 });
 
 export default app;
+
+
+
+
